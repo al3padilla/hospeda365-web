@@ -29,4 +29,4 @@ Guardar archivos en `public/imagenes/` (carrusel: `inicio/`, habitaciones: `habi
 ## Notas
 
 - UI en `components/`; datos mock en `datos/`; estado compartido en `contexto/` (Context API).
-- La API REST y el estado global completo los integra el equipo de backend cuando estén listos.
+- La API REST y el estado global completo posteriormente.
