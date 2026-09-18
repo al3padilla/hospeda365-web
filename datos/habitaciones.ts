@@ -5,6 +5,8 @@ export type Habitacion = {
   pricePerNight: number;
   capacity: number;
   imageUrl: string;
+  /** Detalles extra para el modal */
+  highlights: string[];
 };
 
 /**
@@ -20,6 +22,13 @@ export const HABITACIONES_DESTACADAS: Habitacion[] = [
     pricePerNight: 89,
     capacity: 2,
     imageUrl: "/imagenes/habitaciones/Hbasica.jpg",
+    highlights: [
+      "Cama king y ropa de cama premium",
+      "Balcón con vista al mar",
+      "Escritorio y sillón de lectura",
+      "TV y Wi‑Fi",
+      "Ideal para 1–2 personas",
+    ],
   },
   {
     id: "intermedia",
@@ -29,6 +38,13 @@ export const HABITACIONES_DESTACADAS: Habitacion[] = [
     pricePerNight: 129,
     capacity: 4,
     imageUrl: "/imagenes/habitaciones/Hintermedia.jpg",
+    highlights: [
+      "Dos camas queen",
+      "Minibar incluido",
+      "Decoración boutique con acentos teal",
+      "Iluminación cálida y cortinas amplias",
+      "Ideal para amigos o pareja",
+    ],
   },
   {
     id: "familiar",
@@ -38,6 +54,13 @@ export const HABITACIONES_DESTACADAS: Habitacion[] = [
     pricePerNight: 189,
     capacity: 6,
     imageUrl: "/imagenes/habitaciones/Hfamiliar.jpg",
+    highlights: [
+      "Tres camas queen",
+      "Aire acondicionado",
+      "TV de pantalla grande",
+      "Mucho espacio para familias",
+      "Hasta 6 personas",
+    ],
   },
   {
     id: "kids",
@@ -47,23 +70,44 @@ export const HABITACIONES_DESTACADAS: Habitacion[] = [
     pricePerNight: 199,
     capacity: 3,
     imageUrl: "/imagenes/habitaciones/Hkids.jpg",
-  },
-  {
-    id: "junior-suite",
-    name: "Junior Suite",
-    description:
-      "Suite de lujo con vista panorámica al océano, balcón privado, escritorio de mármol y pared tropical. Acabados en madera y piedra, TV de gran formato y zona de comedor para una estancia más exclusiva.",
-    pricePerNight: 279,
-    capacity: 3,
-    imageUrl: "/imagenes/habitaciones/Hsuiteslujo.jpg",
+    highlights: [
+      "Temática náutica / pirata",
+      "Litera tipo barco con ojos de buey",
+      "Escritorio infantil",
+      "Ambiente divertido y seguro",
+      "Pensada para familias con niños",
+    ],
   },
   {
     id: "vip",
     name: "VIP",
     description:
-      "Suite premium con terraza privada, plunge pool y vista abierta al mar. Cama king, área de estar, puertas de piso a techo y acabados en mármol: la opción más exclusiva del hotel.",
+      "Suite semi lujo con vista panorámica al océano, balcón privado, escritorio de mármol y pared tropical. Acabados en madera y piedra, TV de gran formato y zona de comedor para elevar tu estancia.",
+    pricePerNight: 279,
+    capacity: 3,
+    imageUrl: "/imagenes/habitaciones/Hsuiteslujo.jpg",
+    highlights: [
+      "Vista panorámica al océano",
+      "Balcón privado",
+      "Escritorio de mármol",
+      "Zona de comedor interior",
+      "Acabados en madera y piedra",
+    ],
+  },
+  {
+    id: "platinum",
+    name: "Platinum",
+    description:
+      "La categoría tope del hotel: terraza privada con plunge pool, vista abierta al mar, cama king, área de estar y acabados en mármol. Experiencia premium sin igual.",
     pricePerNight: 399,
     capacity: 2,
     imageUrl: "/imagenes/habitaciones/Hvip.jpg",
+    highlights: [
+      "Terraza privada con plunge pool",
+      "Vista abierta al mar",
+      "Cama king y área de estar",
+      "Acabados en mármol",
+      "La categoría más exclusiva",
+    ],
   },
 ];
