@@ -1,71 +1,108 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { CalendarCheck, CalendarX2, Search } from "lucide-react";
+import DatePicker from "./DatePicker";
+import GuestsPicker, {
+  totalParaCapacidad,
+  type Huespedes,
+} from "./GuestsPicker";
+import { useHabitaciones } from "../contexto/HabitacionesContext";
 
 export default function SearchBar() {
+  const { buscar, habitaciones } = useHabitaciones();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
-  const [guests, setGuests] = useState(2);
+  const [huespedes, setHuespedes] = useState<Huespedes>({
+    adultos: 2,
+    ninos: 0,
+    bebes: 0,
+  });
   const [message, setMessage] = useState("");
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    console.log({ checkIn, checkOut, guests });
+    const personas = totalParaCapacidad(huespedes);
+
+    buscar({
+      checkIn,
+      checkOut,
+      personas,
+      adultos: huespedes.adultos,
+      ninos: huespedes.ninos,
+      bebes: huespedes.bebes,
+    });
+
+    const disponibles = habitaciones.filter((h) => h.capacity >= personas);
+    const detalle = [
+      `${huespedes.adultos} adulto${huespedes.adultos === 1 ? "" : "s"}`,
+      huespedes.ninos
+        ? `${huespedes.ninos} niño${huespedes.ninos === 1 ? "" : "s"}`
+        : null,
+      huespedes.bebes
+        ? `${huespedes.bebes} bebé${huespedes.bebes === 1 ? "" : "s"}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
     setMessage(
-      `Búsqueda simulada: ${checkIn || "—"} → ${checkOut || "—"} · ${guests} persona${guests === 1 ? "" : "s"}`,
+      disponibles.length > 0
+        ? `${disponibles.length} habitación${disponibles.length === 1 ? "" : "es"} · ${detalle}`
+        : `No hay habitaciones para ${personas} o más huéspedes (${detalle})`,
     );
+
+    document.getElementById("habitaciones")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function onCheckInChange(value: string) {
+    setCheckIn(value);
+    if (checkOut && value && checkOut <= value) {
+      setCheckOut("");
+    }
   }
 
   return (
-    <section id="buscar" className="relative z-20 w-full max-w-5xl mx-auto px-4 -mt-10 mb-20">
+    <section
+      id="buscar"
+      className="relative z-30 mx-auto mb-20 mt-[-2.5rem] w-full max-w-5xl overflow-visible px-4"
+    >
       <form
         onSubmit={handleSubmit}
-        className="bg-foam border border-sea/10 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row gap-4 sm:items-end animate-fade-up"
+        className="relative z-30 flex flex-col gap-4 overflow-visible rounded-xl border border-sea/10 bg-foam p-4 sm:flex-row sm:items-start sm:p-5"
         style={{ boxShadow: "0 12px 40px rgba(12, 59, 102, 0.12)" }}
       >
-        <label className="flex flex-col gap-1.5 flex-1 text-left">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            Check-in
-          </span>
-          <input
-            type="date"
+        <div className="flex-1">
+          <DatePicker
+            label="Check-in"
             value={checkIn}
-            onChange={(e) => setCheckIn(e.target.value)}
-            className="border border-sea/15 rounded-md px-3 py-2.5 text-sea bg-white focus:outline-none focus:ring-2 focus:ring-coral/50"
+            onChange={onCheckInChange}
+            icon={<CalendarCheck className="h-3.5 w-3.5" aria-hidden />}
+            placeholder="Fecha de llegada"
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col gap-1.5 flex-1 text-left">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            Check-out
-          </span>
-          <input
-            type="date"
+        <div className="flex-1">
+          <DatePicker
+            label="Check-out"
             value={checkOut}
-            onChange={(e) => setCheckOut(e.target.value)}
-            className="border border-sea/15 rounded-md px-3 py-2.5 text-sea bg-white focus:outline-none focus:ring-2 focus:ring-coral/50"
+            onChange={setCheckOut}
+            min={checkIn || undefined}
+            icon={<CalendarX2 className="h-3.5 w-3.5" aria-hidden />}
+            placeholder="Fecha de salida"
           />
-        </label>
+        </div>
 
-        <label className="flex flex-col gap-1.5 w-full sm:w-28 text-left">
-          <span className="text-xs font-semibold uppercase tracking-wider text-mist">
-            Personas
-          </span>
-          <input
-            type="number"
-            min={1}
-            value={guests}
-            onChange={(e) =>
-              setGuests(Math.max(1, Number(e.target.value) || 1))
-            }
-            className="border border-sea/15 rounded-md px-3 py-2.5 text-sea bg-white focus:outline-none focus:ring-2 focus:ring-coral/50"
-          />
-        </label>
+        <GuestsPicker value={huespedes} onChange={setHuespedes} />
 
         <button
           type="submit"
-          className="bg-coral text-white px-7 py-2.5 rounded-md font-semibold tracking-wide hover:bg-coral-hover transition"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-coral px-7 py-2.5 font-semibold tracking-wide text-white transition hover:bg-coral-hover sm:mt-6"
         >
+          <Search className="h-4 w-4" aria-hidden />
           Buscar
         </button>
       </form>

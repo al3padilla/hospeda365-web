@@ -1,57 +1,59 @@
 "use client";
 
 import { useState } from "react";
-import { TreePalm } from "lucide-react";
+import { Menu, TreePalm, X } from "lucide-react";
+
+const NAV_LINKS = [
+  { href: "/", label: "Inicio" },
+  { href: "/#habitaciones", label: "Habitaciones" },
+  { href: "/#amenidades", label: "Amenidades" },
+  { href: "/#daypass", label: "Day Pass" },
+  { href: "/historial", label: "Mis reservas" },
+] as const;
+
+function Logo() {
+  return (
+    <a href="/" className="group flex items-center gap-2.5 leading-tight">
+      <TreePalm className="h-9 w-9 shrink-0 text-sea" aria-hidden />
+      <span>
+        <span className="block font-[family-name:var(--font-display)] text-xl tracking-tight text-sea sm:text-2xl">
+          Hotel terra azul
+        </span>
+        <span className="block text-[11px] tracking-[0.12em] text-mist">
+          by Hospeda365
+        </span>
+      </span>
+    </a>
+  );
+}
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
 
   return (
-    <nav className="sticky top-0 z-50 bg-[#e8f4fa]/90 backdrop-blur-sm border-b border-sea/10">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        <a href="#" className="group flex items-center gap-2.5 leading-tight">
-          <TreePalm className="h-9 w-9 shrink-0 text-sea" aria-hidden />
-          <span>
-            <span className="block font-[family-name:var(--font-display)] text-xl sm:text-2xl text-sea tracking-tight">
-              Hotel terra azul
-            </span>
-            <span className="block text-[11px] tracking-[0.12em] text-mist">
-              by Hospeda365
-            </span>
-          </span>
-        </a>
+    <nav className="sticky top-0 z-50 border-b border-sea/10 bg-[#e8f4fa]/90 backdrop-blur-sm">
+      <div className="container mx-auto flex items-center justify-between gap-4 px-4 py-3">
+        <Logo />
 
-        <div className="hidden md:flex items-center gap-6">
-          <a href="#" className="text-sm text-sea hover:text-coral transition">
-            Inicio
-          </a>
+        <div className="hidden items-center gap-6 md:flex">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="text-sm text-sea transition hover:text-coral"
+            >
+              {link.label}
+            </a>
+          ))}
           <a
-            href="#habitaciones"
-            className="text-sm text-sea hover:text-coral transition"
-          >
-            Habitaciones
-          </a>
-          <a
-            href="#amenidades"
-            className="text-sm text-sea hover:text-coral transition"
-          >
-            Amenidades
-          </a>
-          <a
-            href="#daypass"
-            className="text-sm text-sea hover:text-coral transition"
-          >
-            Day Pass
-          </a>
-          <a
-            href="#buscar"
-            className="bg-coral text-white text-sm font-semibold tracking-wide px-4 py-2.5 rounded-md hover:bg-coral-hover transition"
+            href="/#buscar"
+            className="rounded-md bg-coral px-4 py-2.5 text-sm font-semibold tracking-wide text-white transition hover:bg-coral-hover"
           >
             RESERVA AHORA
           </a>
           <button
             type="button"
-            className="text-sm text-sea border border-sea/20 px-3 py-2 rounded-md hover:border-sea/40 transition"
+            className="rounded-md border border-sea/20 px-3 py-2 text-sm text-sea transition hover:border-sea/40"
           >
             Iniciar sesión
           </button>
@@ -62,58 +64,34 @@ export default function Navbar() {
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="md:hidden flex h-10 w-10 items-center justify-center rounded-md bg-coral text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-md bg-coral text-white md:hidden"
         >
-          <span className="flex flex-col gap-1.5">
-            <span
-              className={`block h-0.5 w-5 bg-white transition ${open ? "translate-y-2 rotate-45" : ""}`}
-            />
-            <span
-              className={`block h-0.5 w-5 bg-white transition ${open ? "opacity-0" : ""}`}
-            />
-            <span
-              className={`block h-0.5 w-5 bg-white transition ${open ? "-translate-y-2 -rotate-45" : ""}`}
-            />
-          </span>
+          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
       {open ? (
-        <div className="md:hidden border-t border-sea/10 bg-[#e8f4fa] px-4 py-4 flex flex-col gap-3">
-          <a href="#" className="text-sea py-1" onClick={() => setOpen(false)}>
-            Inicio
-          </a>
+        <div className="flex flex-col gap-3 border-t border-sea/10 bg-[#e8f4fa] px-4 py-4 md:hidden">
+          {NAV_LINKS.map((link) => (
+            <a
+              key={link.href}
+              href={link.href}
+              className="py-1 text-sea"
+              onClick={() => setOpen(false)}
+            >
+              {link.label}
+            </a>
+          ))}
           <a
-            href="#habitaciones"
-            className="text-sea py-1"
-            onClick={() => setOpen(false)}
-          >
-            Habitaciones
-          </a>
-          <a
-            href="#amenidades"
-            className="text-sea py-1"
-            onClick={() => setOpen(false)}
-          >
-            Amenidades
-          </a>
-          <a
-            href="#daypass"
-            className="text-sea py-1"
-            onClick={() => setOpen(false)}
-          >
-            Day Pass
-          </a>
-          <a
-            href="#buscar"
-            className="bg-coral text-white text-center font-semibold py-2.5 rounded-md"
+            href="/#buscar"
+            className="rounded-md bg-coral py-2.5 text-center font-semibold text-white"
             onClick={() => setOpen(false)}
           >
             RESERVA AHORA
           </a>
           <button
             type="button"
-            className="text-sea border border-sea/20 py-2 rounded-md"
+            className="rounded-md border border-sea/20 py-2 text-sea"
           >
             Iniciar sesión
           </button>
