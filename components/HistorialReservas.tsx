@@ -143,7 +143,7 @@ export default function HistorialReservas() {
           Aún no tienes reservas registradas.
         </p>
       ) : (
-        <div className="grid gap-5 sm:grid-cols-1 lg:grid-cols-2">
+        <div className="grid gap-5 lg:grid-cols-2">
           {reservas.map((reserva) => (
             <ReservaCard
               key={reserva.id}
