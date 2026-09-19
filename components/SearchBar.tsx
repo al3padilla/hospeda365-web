@@ -7,10 +7,35 @@ import GuestsPicker, {
   totalParaCapacidad,
   type Huespedes,
 } from "./GuestsPicker";
+import { Spinner } from "./Loader";
 import { useHabitaciones } from "../contexto/HabitacionesContext";
+import type { Habitacion } from "../datos/habitaciones";
+
+function mensajeResultado(
+  habitaciones: Habitacion[],
+  huespedes: Huespedes,
+  personas: number,
+): string {
+  const disponibles = habitaciones.filter((h) => h.capacity >= personas);
+  const detalle = [
+    `${huespedes.adultos} adulto${huespedes.adultos === 1 ? "" : "s"}`,
+    huespedes.ninos
+      ? `${huespedes.ninos} niño${huespedes.ninos === 1 ? "" : "s"}`
+      : null,
+    huespedes.bebes
+      ? `${huespedes.bebes} bebé${huespedes.bebes === 1 ? "" : "s"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return disponibles.length > 0
+    ? `${disponibles.length} habitación${disponibles.length === 1 ? "" : "es"} · ${detalle}`
+    : `No hay habitaciones para ${personas} o más huéspedes (${detalle})`;
+}
 
 export default function SearchBar() {
-  const { buscar, habitaciones } = useHabitaciones();
+  const { buscar, habitaciones, cargando } = useHabitaciones();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [huespedes, setHuespedes] = useState<Huespedes>({
@@ -22,6 +47,8 @@ export default function SearchBar() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (cargando) return;
+
     const personas = totalParaCapacidad(huespedes);
 
     buscar({
@@ -33,25 +60,7 @@ export default function SearchBar() {
       bebes: huespedes.bebes,
     });
 
-    const disponibles = habitaciones.filter((h) => h.capacity >= personas);
-    const detalle = [
-      `${huespedes.adultos} adulto${huespedes.adultos === 1 ? "" : "s"}`,
-      huespedes.ninos
-        ? `${huespedes.ninos} niño${huespedes.ninos === 1 ? "" : "s"}`
-        : null,
-      huespedes.bebes
-        ? `${huespedes.bebes} bebé${huespedes.bebes === 1 ? "" : "s"}`
-        : null,
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-    setMessage(
-      disponibles.length > 0
-        ? `${disponibles.length} habitación${disponibles.length === 1 ? "" : "es"} · ${detalle}`
-        : `No hay habitaciones para ${personas} o más huéspedes (${detalle})`,
-    );
-
+    setMessage(mensajeResultado(habitaciones, huespedes, personas));
     document.getElementById("habitaciones")?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -60,9 +69,7 @@ export default function SearchBar() {
 
   function onCheckInChange(value: string) {
     setCheckIn(value);
-    if (checkOut && value && checkOut <= value) {
-      setCheckOut("");
-    }
+    if (checkOut && value && checkOut <= value) setCheckOut("");
   }
 
   return (
@@ -100,10 +107,20 @@ export default function SearchBar() {
 
         <button
           type="submit"
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-coral px-7 py-2.5 font-semibold tracking-wide text-white transition hover:bg-coral-hover sm:mt-6"
+          disabled={cargando}
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-coral px-7 py-2.5 font-semibold tracking-wide text-white transition hover:bg-coral-hover disabled:cursor-wait disabled:opacity-80 sm:mt-6"
         >
-          <Search className="h-4 w-4" aria-hidden />
-          Buscar
+          {cargando ? (
+            <>
+              <Spinner className="h-4 w-4 text-white" />
+              Buscando…
+            </>
+          ) : (
+            <>
+              <Search className="h-4 w-4" aria-hidden />
+              Buscar
+            </>
+          )}
         </button>
       </form>
 

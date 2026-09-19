@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Menu, TreePalm, X } from "lucide-react";
 
 const NAV_LINKS = [
@@ -13,7 +14,7 @@ const NAV_LINKS = [
 
 function Logo() {
   return (
-    <a href="/" className="group flex items-center gap-2.5 leading-tight">
+    <Link href="/" className="group flex items-center gap-2.5 leading-tight">
       <TreePalm className="h-9 w-9 shrink-0 text-sea" aria-hidden />
       <span>
         <span className="block font-[family-name:var(--font-display)] text-xl tracking-tight text-sea sm:text-2xl">
@@ -23,7 +24,7 @@ function Logo() {
           by Hospeda365
         </span>
       </span>
-    </a>
+    </Link>
   );
 }
 
@@ -37,20 +38,20 @@ export default function Navbar() {
 
         <div className="hidden items-center gap-6 md:flex">
           {NAV_LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-sm text-sea transition hover:text-coral"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
-          <a
+          <Link
             href="/#buscar"
             className="rounded-md bg-coral px-4 py-2.5 text-sm font-semibold tracking-wide text-white transition hover:bg-coral-hover"
           >
             RESERVA AHORA
-          </a>
+          </Link>
           <button
             type="button"
             className="rounded-md border border-sea/20 px-3 py-2 text-sm text-sea transition hover:border-sea/40"
@@ -73,22 +74,22 @@ export default function Navbar() {
       {open ? (
         <div className="flex flex-col gap-3 border-t border-sea/10 bg-[#e8f4fa] px-4 py-4 md:hidden">
           {NAV_LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="py-1 text-sea"
               onClick={() => setOpen(false)}
             >
               {link.label}
-            </a>
+            </Link>
           ))}
-          <a
+          <Link
             href="/#buscar"
             className="rounded-md bg-coral py-2.5 text-center font-semibold text-white"
             onClick={() => setOpen(false)}
           >
             RESERVA AHORA
-          </a>
+          </Link>
           <button
             type="button"
             className="rounded-md border border-sea/20 py-2 text-sea"

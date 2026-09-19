@@ -2,7 +2,38 @@
 
 import { X } from "lucide-react";
 import RoomCard from "./RoomCard";
-import { useHabitaciones } from "../contexto/HabitacionesContext";
+import { LoaderInline, SkeletonGrid } from "./Loader";
+import {
+  useHabitaciones,
+  type CriteriosBusqueda,
+} from "../contexto/HabitacionesContext";
+
+function DetalleFiltro({ busqueda }: { busqueda: CriteriosBusqueda }) {
+  const huespedes = [
+    `${busqueda.adultos} adulto${busqueda.adultos === 1 ? "" : "s"}`,
+    busqueda.ninos > 0
+      ? `${busqueda.ninos} niño${busqueda.ninos === 1 ? "" : "s"}`
+      : null,
+    busqueda.bebes > 0
+      ? `${busqueda.bebes} bebé${busqueda.bebes === 1 ? "" : "s"}`
+      : null,
+  ]
+    .filter(Boolean)
+    .join(", ");
+
+  return (
+    <p className="max-w-2xl leading-relaxed text-mist">
+      Mostrando habitaciones para{" "}
+      <strong className="text-sea">{busqueda.personas}</strong> o más huéspedes
+      {" · "}
+      {huespedes}
+      {busqueda.checkIn && busqueda.checkOut
+        ? ` · ${busqueda.checkIn} → ${busqueda.checkOut}`
+        : ""}
+      .
+    </p>
+  );
+}
 
 export default function HabitacionesDestacadas() {
   const { habitacionesFiltradas, busqueda, cargando, limpiarBusqueda } =
@@ -22,23 +53,7 @@ export default function HabitacionesDestacadas() {
 
         {busqueda ? (
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-            <p className="max-w-2xl leading-relaxed text-mist">
-              Mostrando habitaciones para{" "}
-              <strong className="text-sea">{busqueda.personas}</strong> o más
-              huéspedes
-              {" · "}
-              {busqueda.adultos} adulto{busqueda.adultos === 1 ? "" : "s"}
-              {busqueda.ninos > 0
-                ? `, ${busqueda.ninos} niño${busqueda.ninos === 1 ? "" : "s"}`
-                : ""}
-              {busqueda.bebes > 0
-                ? `, ${busqueda.bebes} bebé${busqueda.bebes === 1 ? "" : "s"}`
-                : ""}
-              {busqueda.checkIn && busqueda.checkOut
-                ? ` · ${busqueda.checkIn} → ${busqueda.checkOut}`
-                : ""}
-              .
-            </p>
+            <DetalleFiltro busqueda={busqueda} />
             <button
               type="button"
               onClick={limpiarBusqueda}
@@ -57,7 +72,10 @@ export default function HabitacionesDestacadas() {
       </div>
 
       {cargando ? (
-        <p className="text-center text-mist">Cargando habitaciones…</p>
+        <div role="status" aria-label="Buscando habitaciones">
+          <LoaderInline texto="Buscando habitaciones…" className="py-8" />
+          <SkeletonGrid count={3} />
+        </div>
       ) : habitacionesFiltradas.length === 0 ? (
         <p className="rounded-xl border border-dashed border-sea/20 bg-foam py-12 text-center text-mist">
           No hay habitaciones disponibles para{" "}

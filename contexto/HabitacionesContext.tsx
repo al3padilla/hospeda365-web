@@ -1,10 +1,19 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   HABITACIONES_DESTACADAS,
   type Habitacion,
 } from "../datos/habitaciones";
+import { DELAYS } from "../datos/carga";
+import { useDelayedAction } from "../hooks/useDelayedAction";
 
 export type CriteriosBusqueda = {
   checkIn: string;
@@ -35,32 +44,56 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
     HABITACIONES_DESTACADAS,
   );
   const [busqueda, setBusqueda] = useState<CriteriosBusqueda | null>(null);
-  const [cargando] = useState(false);
+  const [cargando, setCargando] = useState(false);
+  const { runAfter, cancel } = useDelayedAction();
 
-  const habitacionesFiltradas = busqueda
-    ? habitaciones.filter((h) => h.capacity >= busqueda.personas)
-    : habitaciones;
+  const habitacionesFiltradas = useMemo(
+    () =>
+      busqueda
+        ? habitaciones.filter((h) => h.capacity >= busqueda.personas)
+        : habitaciones,
+    [habitaciones, busqueda],
+  );
 
-  function buscar(criterios: CriteriosBusqueda) {
-    setBusqueda(criterios);
-  }
+  const buscar = useCallback(
+    (criterios: CriteriosBusqueda) => {
+      setCargando(true);
+      runAfter(DELAYS.busqueda, () => {
+        setBusqueda(criterios);
+        setCargando(false);
+      });
+    },
+    [runAfter],
+  );
 
-  function limpiarBusqueda() {
+  const limpiarBusqueda = useCallback(() => {
+    cancel();
+    setCargando(false);
     setBusqueda(null);
-  }
+  }, [cancel]);
+
+  const value = useMemo(
+    () => ({
+      habitaciones,
+      habitacionesFiltradas,
+      busqueda,
+      cargando,
+      setHabitaciones,
+      buscar,
+      limpiarBusqueda,
+    }),
+    [
+      habitaciones,
+      habitacionesFiltradas,
+      busqueda,
+      cargando,
+      buscar,
+      limpiarBusqueda,
+    ],
+  );
 
   return (
-    <HabitacionesContext.Provider
-      value={{
-        habitaciones,
-        habitacionesFiltradas,
-        busqueda,
-        cargando,
-        setHabitaciones,
-        buscar,
-        limpiarBusqueda,
-      }}
-    >
+    <HabitacionesContext.Provider value={value}>
       {children}
     </HabitacionesContext.Provider>
   );

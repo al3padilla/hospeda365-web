@@ -1,5 +1,8 @@
+import { Suspense } from "react";
 import PageShell from "../../components/PageShell";
 import ConfirmacionReserva from "../../components/ConfirmacionReserva";
+import { PageLoader } from "../../components/Loader";
+import { esperar } from "../../datos/carga";
 
 type PageProps = {
   searchParams: Promise<{
@@ -9,16 +12,24 @@ type PageProps = {
   }>;
 };
 
-export default async function ConfirmacionPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+async function ConfirmacionContent({ searchParams }: PageProps) {
+  const [params] = await Promise.all([searchParams, esperar()]);
 
   return (
+    <ConfirmacionReserva
+      habitacionId={params.habitacion}
+      checkInInicial={params.checkIn}
+      checkOutInicial={params.checkOut}
+    />
+  );
+}
+
+export default function ConfirmacionPage(props: PageProps) {
+  return (
     <PageShell>
-      <ConfirmacionReserva
-        habitacionId={params.habitacion}
-        checkInInicial={params.checkIn}
-        checkOutInicial={params.checkOut}
-      />
+      <Suspense fallback={<PageLoader titulo="Cargando confirmación…" />}>
+        <ConfirmacionContent {...props} />
+      </Suspense>
     </PageShell>
   );
 }
