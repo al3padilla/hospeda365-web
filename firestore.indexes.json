@@ -1,0 +1,93 @@
+{
+  "//": "Índices compuestos de Cloud Firestore para Hospeda365.",
+  "//_nota": "Firestore crea índices de un solo campo automáticamente. Los compuestos (más de un campo en where/orderBy) hay que declararlos aquí o la consulta falla en tiempo de ejecución con un error que incluye un enlace para crearlo. Desplegar con: firebase deploy --only firestore:indexes",
+
+  "indexes": [
+    {
+      "//": "Panel CRUD: reservas por estado, más recientes primero.",
+      "collectionGroup": "reservations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "creadaEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Mis reservas: las del huésped autenticado, por fecha de entrada.",
+      "collectionGroup": "reservations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "usuarioId", "order": "ASCENDING" },
+        { "fieldPath": "fechaEntrada", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Comprobantes pendientes de validar (bandeja de Recepción).",
+      "collectionGroup": "reservations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estadoPago", "order": "ASCENDING" },
+        { "fieldPath": "creadaEn", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Disponibilidad: reservas activas que se solapan con un rango.",
+      "collectionGroup": "reservations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "habitacionId", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaSalida", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Dashboard: ingresos del mes sobre reservas finalizadas.",
+      "collectionGroup": "reservations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "fechaSalida", "order": "ASCENDING" },
+        { "fieldPath": "total", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Catálogo: habitaciones activas disponibles, ordenadas por precio.",
+      "collectionGroup": "rooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "activa", "order": "ASCENDING" },
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "precioNoche", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Tablero de habitaciones agrupado por piso.",
+      "collectionGroup": "rooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "piso", "order": "ASCENDING" },
+        { "fieldPath": "numero", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "//": "Bandeja de pagos por estado.",
+      "collectionGroup": "payments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "estado", "order": "ASCENDING" },
+        { "fieldPath": "subidoEn", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "//": "Gestión de usuarios: por rol y fecha de registro.",
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rol", "order": "ASCENDING" },
+        { "fieldPath": "creadoEn", "order": "DESCENDING" }
+      ]
+    }
+  ],
+
+  "fieldOverrides": []
+}
