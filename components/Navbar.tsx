@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Menu, TreePalm, X } from "lucide-react";
+import NavbarAuth, { NavbarAuthMovil } from "./NavbarAuth";
 
 const NAV_LINKS = [
   { href: "/", label: "Inicio" },
@@ -52,12 +53,7 @@ export default function Navbar() {
           >
             RESERVA AHORA
           </Link>
-          <button
-            type="button"
-            className="rounded-md border border-sea/20 px-3 py-2 text-sm text-sea transition hover:border-sea/40"
-          >
-            Iniciar sesión
-          </button>
+          <NavbarAuth />
         </div>
 
         <button
@@ -90,12 +86,7 @@ export default function Navbar() {
           >
             RESERVA AHORA
           </Link>
-          <button
-            type="button"
-            className="rounded-md border border-sea/20 py-2 text-sea"
-          >
-            Iniciar sesión
-          </button>
+          <NavbarAuthMovil onNavegar={() => setOpen(false)} />
         </div>
       ) : null}
     </nav>
