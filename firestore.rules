@@ -1,0 +1,196 @@
+rules_version = '2';
+
+// ============================================================================
+// REGLAS DE SEGURIDAD DE CLOUD FIRESTORE — Hospeda365
+// ============================================================================
+//
+// IDEA CENTRAL: estas reglas son la ÚNICA barrera real de seguridad.
+// La app cliente (React Native) se puede descompilar, y cualquiera puede
+// llamar a la API de Firestore directamente con la apiKey del proyecto.
+// Por eso, todo lo que valida el formulario en el cliente se vuelve a
+// validar aquí. Lo del cliente es comodidad; lo de aquí es seguridad.
+//
+// Desplegar con:  firebase deploy --only firestore:rules
+// Probar con:     firebase emulators:start --only firestore
+// ============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------------
+    // Funciones auxiliares
+    // ------------------------------------------------------------------
+
+    function autenticado() {
+      return request.auth != null;
+    }
+
+    function esDueno(userId) {
+      return autenticado() && request.auth.uid == userId;
+    }
+
+    // Lee el perfil del usuario que hace la petición.
+    // OJO: cada get() cuenta como una lectura facturable.
+    function perfil() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function rol() {
+      return autenticado() ? perfil().rol : 'anonimo';
+    }
+
+    function esAdmin() {
+      return rol() == 'admin';
+    }
+
+    function esPersonal() {
+      return rol() == 'admin' || rol() == 'recepcionista';
+    }
+
+    // Cuenta activa: un usuario desactivado no puede hacer nada.
+    function activo() {
+      return autenticado() && perfil().activo == true;
+    }
+
+    // Verifica que la escritura NO toque ninguno de los campos indicados.
+    function noModifica(campos) {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(campos.toSet());
+    }
+
+    // ------------------------------------------------------------------
+    // users — perfiles. El ID del documento ES el UID de Firebase Auth.
+    // ------------------------------------------------------------------
+    match /users/{userId} {
+
+      // Cada quien lee su perfil; el personal lee todos (para el CRUD).
+      allow read: if esDueno(userId) || esPersonal();
+
+      // Registro: sólo puedes crear TU propio perfil, y siempre como
+      // 'huesped'. Esto es lo que impide que alguien se auto-nombre admin
+      // llamando a la API directamente, saltándose la pantalla de registro.
+      allow create: if esDueno(userId)
+                    && request.resource.data.rol == 'huesped'
+                    && request.resource.data.activo == true
+                    && request.resource.data.email == request.auth.token.email
+                    && request.resource.data.keys().hasAll([
+                         'email', 'nombre', 'apellido', 'rol', 'activo'
+                       ]);
+
+      // El usuario edita su perfil pero NO su rol, email ni estado activo.
+      // Sólo un admin puede cambiar esos tres campos.
+      allow update: if (esDueno(userId) && noModifica(['rol', 'email', 'activo']))
+                    || esAdmin();
+
+      // Nunca se borran usuarios: se marcan activo=false (borrado lógico).
+      // Así el historial de reservas no queda huérfano.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // rooms — habitaciones (catálogo + estados)
+    // ------------------------------------------------------------------
+    match /rooms/{roomId} {
+
+      // El catálogo es público para usuarios con sesión.
+      allow read: if autenticado();
+
+      // Sólo el personal administra habitaciones.
+      allow create, delete: if esAdmin() && activo();
+
+      // Recepción cambia estados (Disponible / Ocupada / Limpieza);
+      // sólo admin cambia precios y datos del catálogo.
+      allow update: if activo() && (
+                      esAdmin()
+                      || (rol() == 'recepcionista'
+                          && noModifica(['precioNoche', 'tipo', 'capacidad', 'numero']))
+                    )
+                    && request.resource.data.estado in
+                       ['disponible', 'ocupada', 'limpieza', 'mantenimiento'];
+
+      // Historial de cambios de estado. Sólo se agrega, nunca se edita:
+      // es una bitácora de auditoría.
+      match /historial/{eventoId} {
+        allow read:   if esPersonal();
+        allow create: if esPersonal() && activo();
+        allow update, delete: if false;
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // reservations — reservas
+    // ------------------------------------------------------------------
+    match /reservations/{reservaId} {
+
+      // El huésped ve SÓLO sus reservas; el personal ve todas.
+      allow read: if esPersonal()
+                  || (autenticado() && resource.data.usuarioId == request.auth.uid);
+
+      // El huésped crea reservas a su nombre, siempre en estado 'pendiente'.
+      // No puede crear una reserva ya "confirmada" ni "aprobada".
+      allow create: if activo()
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.estado == 'pendiente'
+                    && request.resource.data.estadoPago in ['sin_comprobante', 'en_revision']
+                    && request.resource.data.fechaEntrada < request.resource.data.fechaSalida
+                    && request.resource.data.numeroHuespedes > 0
+                    && request.resource.data.total >= 0;
+
+      // El huésped sólo puede cancelar o adjuntar comprobante.
+      // Confirmar, aprobar pagos y cambiar totales es cosa del personal.
+      allow update: if activo() && (
+                      esPersonal()
+                      || (resource.data.usuarioId == request.auth.uid
+                          && noModifica(['usuarioId', 'total', 'noches',
+                                         'habitacionId', 'estadoPago'])
+                          && request.resource.data.estado in ['pendiente', 'cancelada'])
+                    );
+
+      // Las reservas no se borran: se cancelan. El histórico se conserva
+      // porque el dashboard calcula ingresos sobre él.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // payments — comprobantes de pago (los que valida Recepción)
+    // ------------------------------------------------------------------
+    match /payments/{pagoId} {
+
+      allow read: if esPersonal()
+                  || (autenticado() && resource.data.usuarioId == request.auth.uid);
+
+      // El huésped sube su comprobante; entra siempre 'en_revision'.
+      allow create: if activo()
+                    && request.resource.data.usuarioId == request.auth.uid
+                    && request.resource.data.estado == 'en_revision'
+                    && request.resource.data.monto > 0;
+
+      // SÓLO el personal aprueba o rechaza. Este es el punto crítico:
+      // si esto fallara, un huésped podría auto-aprobarse un pago.
+      allow update: if esPersonal() && activo()
+                    && request.resource.data.estado in ['aprobado', 'rechazado', 'en_revision'];
+
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // metrics — agregados para el Dashboard (ocupación, ingresos…)
+    // ------------------------------------------------------------------
+    match /metrics/{periodo} {
+
+      allow read: if esPersonal();
+
+      // Sólo Cloud Functions escribe aquí (el Admin SDK se salta las reglas).
+      // El cliente NUNCA escribe métricas: si pudiera, cualquiera falsearía
+      // los ingresos del hotel.
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------------------
+    // Todo lo demás queda cerrado por defecto.
+    // ------------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
