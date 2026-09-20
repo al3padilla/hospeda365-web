@@ -72,7 +72,10 @@ service cloud.firestore {
       allow create: if esDueno(userId)
                     && request.resource.data.rol == 'huesped'
                     && request.resource.data.activo == true
-                    && request.resource.data.email == request.auth.token.email
+                    // Comparado en minúsculas de los dos lados: la app guarda
+                    // el correo normalizado, y el token puede traerlo con
+                    // mayúsculas según cómo lo escribió el usuario.
+                    && request.resource.data.email == request.auth.token.email.lower()
                     && request.resource.data.keys().hasAll([
                          'email', 'nombre', 'apellido', 'rol', 'activo'
                        ]);

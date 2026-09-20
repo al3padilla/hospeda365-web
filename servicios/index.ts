@@ -1,31 +1,41 @@
 /**
- * PUNTO ÚNICO DE CAMBIO entre mocks y Firebase.
+ * PUNTO ÚNICO DE CAMBIO entre datos mock y Firebase.
  *
  * Todo el resto de la aplicación importa desde aquí:
  *
  *     import { servicioAuth } from "../servicios";
  *
- * Nadie más sabe si detrás hay datos falsos o Firebase. Ese es el objetivo:
- * cuando llegue el backend real, se cambia esta línea y nada más.
+ * Nadie más sabe si detrás hay datos falsos o Firebase. Ese es el objetivo.
  */
 
 import { authMock } from "./authMock";
+import { authFirebase } from "./authFirebase";
 import type { ServicioAuth } from "./tiposAuth";
 import { metricasMock } from "./metricasMock";
 import type { ServicioMetricas } from "./tiposMetricas";
+import { firebaseConfigurado } from "./firebase";
 
-// import { authFirebase } from "./authFirebase";
+/**
+ * Se usan mocks cuando NO hay credenciales de Firebase.
+ *
+ * Así un compañero puede clonar el repo y correr el sitio sin configurar
+ * nada: le funciona con datos falsos. En cuanto crea su `.env.local`, la
+ * misma app pasa a usar Firebase de verdad, sin tocar código.
+ *
+ * Para forzar los mocks aun teniendo credenciales (útil para desarrollar
+ * sin gastar lecturas), poner en .env.local:
+ *
+ *     NEXT_PUBLIC_USAR_MOCKS=true
+ */
+const FORZAR_MOCKS = process.env.NEXT_PUBLIC_USAR_MOCKS === "true";
 
-/** Cambiar a `false` cuando Firebase esté configurado. */
-const USAR_MOCKS = true;
+export const usandoMocks: boolean = FORZAR_MOCKS || !firebaseConfigurado;
 
-export const servicioAuth: ServicioAuth = USAR_MOCKS
-  ? authMock
-  : authMock; // ← reemplazar por `authFirebase`
+export const servicioAuth: ServicioAuth = usandoMocks ? authMock : authFirebase;
 
-export const servicioMetricas: ServicioMetricas = USAR_MOCKS
-  ? metricasMock
-  : metricasMock; // ← reemplazar por `metricasFirebase`
+// Las métricas todavía no tienen implementación con Firestore: el dashboard
+// leerá del documento precalculado metricas/{periodo} cuando exista.
+export const servicioMetricas: ServicioMetricas = metricasMock;
 
 export { ErrorAuth, MENSAJES_ERROR } from "./tiposAuth";
 export type {
