@@ -7,6 +7,7 @@ import { AtSign, KeyRound, LogIn } from "lucide-react";
 
 import { useAuth } from "../contexto/AuthContext";
 import { CUENTAS_DEMO } from "../datos/usuarios";
+import { usandoMocks } from "../servicios";
 import type { Credenciales } from "../servicios/tiposAuth";
 import { sinErrores, validarLogin, type ErroresCampo } from "../validacion/auth";
 import { Spinner } from "./Loader";
@@ -146,8 +147,9 @@ export default function FormularioLogin() {
           Crear una cuenta
         </Link>
 
-        {/* Atajo sólo para la demo con datos mock. Al conectar Firebase
-            este bloque se elimina. */}
+        {/* Atajo solo para la demo con datos mock. Con Firebase conectado
+            estas cuentas no existen, así que el bloque desaparece solo. */}
+        {usandoMocks ? (
         <div className="mt-7 border-t border-sea/10 pt-5">
           <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-mist">
             Cuentas de prueba
@@ -170,6 +172,7 @@ export default function FormularioLogin() {
             ))}
           </div>
         </div>
+        ) : null}
       </div>
     </section>
   );
