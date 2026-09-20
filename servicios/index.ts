@@ -11,6 +11,8 @@
 
 import { authMock } from "./authMock";
 import type { ServicioAuth } from "./tiposAuth";
+import { metricasMock } from "./metricasMock";
+import type { ServicioMetricas } from "./tiposMetricas";
 
 // import { authFirebase } from "./authFirebase";
 
@@ -21,6 +23,10 @@ export const servicioAuth: ServicioAuth = USAR_MOCKS
   ? authMock
   : authMock; // ← reemplazar por `authFirebase`
 
+export const servicioMetricas: ServicioMetricas = USAR_MOCKS
+  ? metricasMock
+  : metricasMock; // ← reemplazar por `metricasFirebase`
+
 export { ErrorAuth, MENSAJES_ERROR } from "./tiposAuth";
 export type {
   Credenciales,
@@ -29,3 +35,4 @@ export type {
   ServicioAuth,
   CodigoErrorAuth,
 } from "./tiposAuth";
+export type { ServicioMetricas } from "./tiposMetricas";
