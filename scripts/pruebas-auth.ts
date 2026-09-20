@@ -23,16 +23,16 @@ import {
   iniciales,
   nombreCompleto,
   type AuthState,
-} from "../contexto/authReducer.ts";
+} from "../contexto/authReducer";
 import {
   validarLogin,
   validarRegistro,
   sinErrores,
   fuerzaPassword,
   requisitosFaltantes,
-} from "../validacion/auth.ts";
-import { authMock } from "../servicios/authMock.ts";
-import { ErrorAuth, type Sesion } from "../servicios/tiposAuth.ts";
+} from "../validacion/auth";
+import { authMock } from "../servicios/authMock";
+import { ErrorAuth, type Sesion } from "../servicios/tiposAuth";
 
 let pasadas = 0;
 let fallidas = 0;
