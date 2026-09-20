@@ -52,6 +52,13 @@ const OPCIONES_POR_ROL: Record<Rol, Opcion[]> = {
   ],
   recepcionista: [
     {
+      titulo: "Dashboard",
+      descripcion: "Ocupación, ganancias mensuales y reservas pendientes.",
+      href: "/dashboard",
+      icono: LayoutDashboard,
+      disponible: true,
+    },
+    {
       titulo: "Panel de gestión",
       descripcion:
         "Listar reservas, validar comprobantes y cambiar estados de habitaciones.",
@@ -79,9 +86,9 @@ const OPCIONES_POR_ROL: Record<Rol, Opcion[]> = {
       titulo: "Dashboard",
       descripcion:
         "Ocupación, ganancias mensuales y reservas pendientes.",
-      href: "#",
+      href: "/dashboard",
       icono: LayoutDashboard,
-      disponible: false,
+      disponible: true,
     },
     {
       titulo: "Panel de gestión",
