@@ -6,8 +6,6 @@ import { useRouter } from "next/navigation";
 import { AtSign, KeyRound, LogIn } from "lucide-react";
 
 import { useAuth } from "../contexto/AuthContext";
-import { CUENTAS_DEMO } from "../datos/usuarios";
-import { usandoMocks } from "../servicios";
 import type { Credenciales } from "../servicios/tiposAuth";
 import { sinErrores, validarLogin, type ErroresCampo } from "../validacion/auth";
 import { Spinner } from "./Loader";
@@ -16,8 +14,8 @@ import CampoAuth from "./CampoAuth";
 
 /** A dónde va cada rol después de iniciar sesión. */
 const DESTINO_POR_ROL = {
-  admin: "/mi-cuenta",
-  recepcionista: "/mi-cuenta",
+  admin: "/admin",
+  recepcionista: "/admin",
   huesped: "/mi-cuenta",
 } as const;
 
@@ -58,15 +56,11 @@ export default function FormularioLogin() {
     });
 
     // El Context ya guardó la sesión; sólo navegamos.
-    if (ok) router.push("/mi-cuenta");
+    // El useEffect superior redirige según el rol cuando el Context actualiza usuario.
+    if (!ok) return;
   }
 
-  /** Rellena el formulario con una cuenta de prueba (solo para la demo). */
-  function usarDemo(email: string, password: string) {
-    setDatos({ email, password });
-    setErrores({});
-    if (error) limpiarError();
-  }
+
 
   return (
     <section className="mx-auto w-full max-w-md px-4 py-14">
@@ -147,32 +141,7 @@ export default function FormularioLogin() {
           Crear una cuenta
         </Link>
 
-        {/* Atajo solo para la demo con datos mock. Con Firebase conectado
-            estas cuentas no existen, así que el bloque desaparece solo. */}
-        {usandoMocks ? (
-        <div className="mt-7 border-t border-sea/10 pt-5">
-          <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-mist">
-            Cuentas de prueba
-          </p>
 
-          <div className="flex flex-col gap-1.5">
-            {CUENTAS_DEMO.map((cuenta) => (
-              <button
-                key={cuenta.email}
-                type="button"
-                onClick={() => usarDemo(cuenta.email, cuenta.password)}
-                disabled={estaCargando}
-                className="flex items-center justify-between gap-3 rounded-md bg-[#e8f4fa] px-3 py-2 text-left transition hover:bg-[#d8ecf6] disabled:opacity-60"
-              >
-                <span className="text-sm font-semibold text-sea">
-                  {cuenta.etiqueta}
-                </span>
-                <span className="truncate text-xs text-mist">{cuenta.email}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-        ) : null}
       </div>
     </section>
   );

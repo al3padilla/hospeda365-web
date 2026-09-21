@@ -2,6 +2,7 @@
 
 import { HabitacionesProvider } from "../contexto/HabitacionesContext";
 import { AuthProvider } from "../contexto/AuthContext";
+import { AdminProvider } from "../contexto/AdminContext";
 
 /**
  * Providers globales de la aplicación.
@@ -17,7 +18,7 @@ export default function Proveedores({
 }) {
   return (
     <AuthProvider>
-      <HabitacionesProvider>{children}</HabitacionesProvider>
+      <HabitacionesProvider><AdminProvider>{children}</AdminProvider></HabitacionesProvider>
     </AuthProvider>
   );
 }
