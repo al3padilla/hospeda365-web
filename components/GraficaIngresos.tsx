@@ -7,6 +7,11 @@ type GraficaIngresosProps = {
   datos: ResumenMes[];
   /** Periodo en curso: se resalta y siempre lleva etiqueta. */
   periodoActual: string;
+  /** Oculta título y subtítulo cuando el contenedor ya trae los suyos. */
+  mostrarTitulo?: boolean;
+  /** Color de la barra resaltada y de las demás. */
+  color?: string;
+  colorTenue?: string;
 };
 
 // Geometría del dibujo. El viewBox deja aire arriba para las etiquetas de
@@ -21,8 +26,12 @@ const ALTO_PLOT = ALTO - M.arriba - M.abajo;
 const COLOR_BARRA = "#2a6fb0";
 const COLOR_BARRA_TENUE = "#9dc0e0";
 
+/** Tope del eje cuando no hay ningún ingreso: evita dividir entre cero. */
+const TOPE_MINIMO = 100;
+
 /** Redondea el tope a un número limpio para que las marcas del eje lo sean. */
 function topeEje(max: number): number {
+  if (max <= 0) return TOPE_MINIMO;
   const magnitud = Math.pow(10, Math.floor(Math.log10(max)));
   return Math.ceil(max / (magnitud / 2)) * (magnitud / 2);
 }
@@ -30,6 +39,9 @@ function topeEje(max: number): number {
 export default function GraficaIngresos({
   datos,
   periodoActual,
+  mostrarTitulo = true,
+  color = COLOR_BARRA,
+  colorTenue = COLOR_BARRA_TENUE,
 }: GraficaIngresosProps) {
   const [activo, setActivo] = useState<number | null>(null);
 
@@ -44,20 +56,22 @@ export default function GraficaIngresos({
   const xBanda = (i: number) => M.izquierda + banda * i;
   const xCentro = (i: number) => xBanda(i) + banda / 2;
 
-  const indiceMax = datos.findIndex((d) => d.ingresos === maximo);
+  const indiceMax = maximo > 0 ? datos.findIndex((d) => d.ingresos === maximo) : -1;
   const indiceActual = datos.findIndex((d) => d.periodo === periodoActual);
 
   return (
     <figure className="m-0">
-      <figcaption className="mb-1">
-        <h3 className="font-[family-name:var(--font-display)] text-xl text-sea">
-          Ganancias mensuales
-        </h3>
-        <p className="mt-0.5 text-sm text-mist">
-          Ingresos confirmados por mes, en dólares. Pasa el cursor para ver el
-          detalle.
-        </p>
-      </figcaption>
+      {mostrarTitulo ? (
+        <figcaption className="mb-1">
+          <h3 className="font-[family-name:var(--font-display)] text-xl text-sea">
+            Ganancias mensuales
+          </h3>
+          <p className="mt-0.5 text-sm text-mist">
+            Ingresos confirmados por mes, en dólares. Pasa el cursor para ver el
+            detalle.
+          </p>
+        </figcaption>
+      ) : null}
 
       <div className="relative mt-4">
         <svg
@@ -118,7 +132,7 @@ export default function GraficaIngresos({
                   width={anchoBarra}
                   height={Math.max(2, alto)}
                   rx="4"
-                  fill={resaltado ? COLOR_BARRA : COLOR_BARRA_TENUE}
+                  fill={resaltado ? color : colorTenue}
                   pointerEvents="none"
                 />
                 {/* Tapa el redondeo inferior: la barra nace cuadrada de la base */}
@@ -127,7 +141,7 @@ export default function GraficaIngresos({
                   y={y(d.ingresos) + Math.max(2, alto) - 4}
                   width={anchoBarra}
                   height="4"
-                  fill={resaltado ? COLOR_BARRA : COLOR_BARRA_TENUE}
+                  fill={resaltado ? color : colorTenue}
                   pointerEvents="none"
                 />
 
@@ -179,11 +193,11 @@ export default function GraficaIngresos({
               top: `${(y(datos[activo].ingresos) / ALTO) * 100}%`,
             }}
           >
-            <p className="text-xs text-mist">{datos[activo].etiqueta} 2026</p>
+            <p className="text-xs text-mist">{datos[activo].etiqueta} {datos[activo].periodo.slice(0, 4)}</p>
             <p className="text-sm font-semibold text-sea">
               {formatearDinero(datos[activo].ingresos)}
             </p>
-            <p className="text-xs text-mist">{datos[activo].reservas} reservas</p>
+            <p className="text-xs text-mist">{datos[activo].reservas} {datos[activo].reservas === 1 ? "reserva" : "reservas"}</p>
           </div>
         ) : null}
       </div>

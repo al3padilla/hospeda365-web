@@ -11,6 +11,8 @@ import {
 type EstadoHabitacionesProps = {
   datos: ConteoEstado[];
   total: number;
+  /** Oculta título y subtítulo cuando el contenedor ya trae los suyos. */
+  mostrarTitulo?: boolean;
 };
 
 /**
@@ -22,6 +24,7 @@ const MINIMO_PARA_ETIQUETA = 12;
 export default function EstadoHabitaciones({
   datos,
   total,
+  mostrarTitulo = true,
 }: EstadoHabitacionesProps) {
   const [activo, setActivo] = useState<string | null>(null);
 
@@ -34,14 +37,16 @@ export default function EstadoHabitaciones({
 
   return (
     <figure className="m-0">
-      <figcaption className="mb-1">
-        <h3 className="font-[family-name:var(--font-display)] text-xl text-sea">
-          Estado de las habitaciones
-        </h3>
-        <p className="mt-0.5 text-sm text-mist">
-          {total} habitaciones en inventario, ahora mismo.
-        </p>
-      </figcaption>
+      {mostrarTitulo ? (
+        <figcaption className="mb-1">
+          <h3 className="font-[family-name:var(--font-display)] text-xl text-sea">
+            Estado de las habitaciones
+          </h3>
+          <p className="mt-0.5 text-sm text-mist">
+            {total} habitaciones en inventario, ahora mismo.
+          </p>
+        </figcaption>
+      ) : null}
 
       {/* La separación entre segmentos la hace el hueco del fondo, no un borde:
           un contorno agrega tinta que no es dato. */}
