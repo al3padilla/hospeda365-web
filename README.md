@@ -1,6 +1,6 @@
 # Hospeda365 Web — Hotel Terra Azul
 
-Frontend del hotel **Terra Azul** (Hospeda365).  
+Frontend del **Hotel Terra Azul** (Hospeda365).  
 **React + Next.js + TypeScript + Tailwind CSS**.
 
 ## Inicio rápido
