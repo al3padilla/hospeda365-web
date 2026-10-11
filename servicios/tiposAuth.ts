@@ -1,26 +1,10 @@
-/**
- * CONTRATO del servicio de autenticación.
- *
- * Esta es la pieza clave del diseño: ni el Context ni las pantallas saben
- * de dónde salen los datos. Sólo conocen esta interfaz.
- *
- * Hoy la implementa `authMock.ts` (datos falsos en `datos/usuarios.ts`).
- * Mañana la implementará `authFirebase.ts` (Firebase Auth + Firestore).
- * Cambiar de uno a otro es cambiar una línea en `servicios/index.ts`.
- *
- * Es el mismo patrón que sigue el README del proyecto:
- * "La API REST y el estado global completo posteriormente".
- */
-
 import type { Usuario } from "../datos/usuarios";
 
-/** Datos del formulario de inicio de sesión. */
 export type Credenciales = {
   email: string;
   password: string;
 };
 
-/** Datos del formulario de registro. */
 export type DatosRegistro = {
   nombre: string;
   apellido: string;
@@ -30,9 +14,6 @@ export type DatosRegistro = {
   confirmPassword: string;
 };
 
-/**
- * Sesión activa. El token simula el ID token de Firebase Authentication.
- */
 export type Sesion = {
   usuario: Usuario;
   token: string;
@@ -40,7 +21,7 @@ export type Sesion = {
   expiraEn: string;
 };
 
-/** Códigos de error estables, independientes del proveedor. */
+/** Códigos independientes del proveedor de autenticación. */
 export type CodigoErrorAuth =
   | "credenciales_invalidas"
   | "email_ya_registrado"
@@ -51,12 +32,6 @@ export type CodigoErrorAuth =
   | "error_red"
   | "error_desconocido";
 
-/**
- * Error de autenticación normalizado.
- *
- * Firebase lanza códigos como `auth/wrong-password`; la implementación de
- * Firebase los traducirá a estos códigos, así la interfaz nunca cambia.
- */
 export class ErrorAuth extends Error {
   readonly codigo: CodigoErrorAuth;
 
@@ -67,7 +42,6 @@ export class ErrorAuth extends Error {
   }
 }
 
-/** Mensajes en español listos para mostrar al usuario. */
 export const MENSAJES_ERROR: Record<CodigoErrorAuth, string> = {
   credenciales_invalidas: "El correo o la contraseña son incorrectos.",
   email_ya_registrado: "Ya existe una cuenta con este correo electrónico.",
@@ -79,26 +53,18 @@ export const MENSAJES_ERROR: Record<CodigoErrorAuth, string> = {
   error_desconocido: "Ocurrió un error inesperado. Intenta de nuevo.",
 };
 
-/**
- * Interfaz que TODA implementación de autenticación debe cumplir.
- *
- * Todos los métodos son asíncronos a propósito: aunque el mock responde
- * casi al instante, Firebase no lo hará, y así la interfaz ya está lista.
- */
+/** Contrato común de `authMock` y `authFirebase`. */
 export type ServicioAuth = {
-  /** Inicia sesión. Lanza `ErrorAuth` si las credenciales no son válidas. */
+  /** Lanza `ErrorAuth` si las credenciales no son válidas. */
   login(credenciales: Credenciales): Promise<Sesion>;
 
-  /** Registra un usuario nuevo y lo deja con sesión iniciada. */
   registrar(datos: DatosRegistro): Promise<Sesion>;
 
-  /** Cierra la sesión activa. */
   logout(): Promise<void>;
 
-  /** Recupera la sesión guardada al abrir el sitio. `null` si no hay o expiró. */
+  /** `null` si no hay sesión guardada o ya expiró. */
   restaurarSesion(): Promise<Sesion | null>;
 
-  /** Actualiza los datos del perfil del usuario autenticado. */
   actualizarPerfil(
     usuarioId: string,
     cambios: Partial<Usuario>,

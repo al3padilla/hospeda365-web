@@ -26,7 +26,6 @@ const DATOS_VACIOS: DatosRegistro = {
   confirmPassword: "",
 };
 
-/** Etiqueta y color de cada nivel del indicador de fuerza. */
 const NIVELES = [
   { texto: "", color: "bg-sea/15", textoColor: "text-mist" },
   { texto: "Débil", color: "bg-red-500", textoColor: "text-red-600" },
@@ -40,14 +39,13 @@ export default function FormularioRegistro() {
 
   const [datos, setDatos] = useState<DatosRegistro>(DATOS_VACIOS);
   const [errores, setErrores] = useState<ErroresCampo<DatosRegistro>>({});
-  /** Hasta el primer envío no validamos: es molesto ver errores mientras se escribe. */
+  /** La validación en vivo empieza tras el primer envío. */
   const [intentoEnvio, setIntentoEnvio] = useState(false);
 
   function actualizar(campo: keyof DatosRegistro, valor: string) {
     const nuevos = { ...datos, [campo]: valor };
     setDatos(nuevos);
 
-    // Tras el primer intento sí revalidamos en vivo, para dar feedback inmediato.
     if (intentoEnvio) setErrores(validarRegistro(nuevos));
     if (error) limpiarError();
   }
@@ -154,7 +152,6 @@ export default function FormularioRegistro() {
               disabled={estaCargando}
             />
 
-            {/* Indicador de fuerza: tres barras que se van llenando. */}
             {datos.password.length > 0 ? (
               <div className="mt-2 flex items-center gap-2">
                 <div className="flex flex-1 gap-1">

@@ -6,17 +6,6 @@ import { ChevronDown, LogOut, UserCircle2 } from "lucide-react";
 
 import { useAuth } from "../contexto/AuthContext";
 
-/**
- * Sección de sesión del Navbar.
- *
- * Vive en su propio archivo para que el `Navbar.tsx` original cambie lo
- * mínimo posible: allí sólo se reemplazan los dos botones de "Iniciar
- * sesión" que estaban sin conectar.
- *
- * Sin sesión → enlace a /login.
- * Con sesión → avatar con menú desplegable (nombre, mi cuenta, salir).
- */
-
 /** Versión de escritorio, con menú desplegable. */
 export default function NavbarAuth() {
   const { estaAutenticado, usuario, nombreCompleto, iniciales, logout, state } =
@@ -24,7 +13,6 @@ export default function NavbarAuth() {
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
-  // Cierra el menú al hacer clic fuera o presionar Escape.
   useEffect(() => {
     if (!abierto) return;
 
@@ -47,8 +35,7 @@ export default function NavbarAuth() {
     };
   }, [abierto]);
 
-  // Mientras se restaura la sesión guardada, un espacio neutro evita que
-  // el botón "parpadee" de invitado a usuario al cargar la página.
+  // Placeholder para evitar el parpadeo mientras se restaura la sesión.
   if (state.estado === "inicializando") {
     return <div className="h-9 w-24 animate-pulse rounded-md bg-sea/10" />;
   }

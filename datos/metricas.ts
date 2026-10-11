@@ -1,15 +1,5 @@
-/**
- * Métricas del dashboard administrativo.
- *
- * Datos temporales (mock). Cuando exista Firestore, estos números saldrán de
- * la colección `metricas`, que guarda un documento precalculado por mes —
- * así el dashboard hace UNA lectura en vez de recorrer cientos de reservas.
- * Ver docs/firebase-firestore.md.
- */
-
 import type { EstadoReserva } from "./historialReservas";
 
-/** Estados operativos de una habitación física. */
 export type EstadoHabitacion =
   | "disponible"
   | "ocupada"
@@ -31,7 +21,6 @@ export type ConteoEstado = {
 };
 
 export type Metricas = {
-  /** Periodo al que corresponde el resumen. */
   periodo: string;
   ocupacionPorcentaje: number;
   habitacionesTotales: number;
@@ -40,24 +29,12 @@ export type Metricas = {
   ingresosMesAnterior: number;
   reservasPendientes: number;
   comprobantesPorValidar: number;
-  /** Serie histórica para la gráfica de ganancias. */
   historico: ResumenMes[];
-  /** Distribución actual del inventario físico. */
   estadoHabitaciones: ConteoEstado[];
-  /** Cuántas reservas hay en cada estado. */
   reservasPorEstado: { estado: EstadoReserva; cantidad: number }[];
 };
 
-/**
- * Paleta de las gráficas.
- *
- * NO se eligió a ojo: se validó con la fórmula de color (banda de luminosidad,
- * piso de croma, separación bajo daltonismo y contraste contra la superficie).
- * El par crítico es verde ↔ naranja, que bajo protanopía es el que más colapsa;
- * este orden lo deja en ΔE 9.1, por encima del umbral de 8.
- *
- * Si cambias un color, revalida antes de subirlo.
- */
+// Paleta validada para daltonismo (verde ↔ naranja ΔE 9.1); revalidar si se cambia.
 export const COLOR_ESTADO: Record<EstadoHabitacion, string> = {
   ocupada: "#2a6fb0",
   limpieza: "#d97706",
@@ -72,7 +49,7 @@ export const ETIQUETA_ESTADO: Record<EstadoHabitacion, string> = {
   mantenimiento: "Mantenimiento",
 };
 
-/** Orden fijo de presentación: nunca se cicla ni se reordena por valor. */
+/** Orden fijo: no se reordena por valor. */
 export const ORDEN_ESTADOS: EstadoHabitacion[] = [
   "ocupada",
   "limpieza",
@@ -80,11 +57,6 @@ export const ORDEN_ESTADOS: EstadoHabitacion[] = [
   "mantenimiento",
 ];
 
-/**
- * Inventario simulado: 24 habitaciones repartidas entre las seis categorías.
- * Las cifras de ingresos son coherentes con los precios de
- * datos/habitaciones.ts ($89 a $399 por noche).
- */
 export const METRICAS_MOCK: Metricas = {
   periodo: "2026-09",
   ocupacionPorcentaje: 66.7,
@@ -120,15 +92,11 @@ export const METRICAS_MOCK: Metricas = {
   ],
 };
 
-/** Formatea un monto en dólares, sin decimales. */
 export function formatearDinero(valor: number): string {
   return `$${valor.toLocaleString("en-US")}`;
 }
 
-/**
- * Versión compacta para cifras grandes de las tarjetas: 38420 → $38.4K.
- * Las tarjetas necesitan que el número quepa; la tabla lleva el valor exacto.
- */
+/** 38420 → $38.4K */
 export function formatearDineroCompacto(valor: number): string {
   if (Math.abs(valor) >= 1000) {
     return `$${(valor / 1000).toFixed(1)}K`;

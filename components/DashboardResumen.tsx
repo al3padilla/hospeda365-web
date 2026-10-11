@@ -53,8 +53,6 @@ export default function DashboardResumen() {
     };
   }, []);
 
-  // Mientras se restaura la sesión guardada no decidimos nada: evita
-  // mandar al login a alguien que sí tenía permiso.
   if (state.estado === "inicializando") {
     return <PageLoader titulo="Verificando tu sesión…" />;
   }
@@ -100,7 +98,6 @@ export default function DashboardResumen() {
         </p>
       </header>
 
-      {/* Fila de métricas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <TarjetaMetrica
           etiqueta="Ocupación actual"
@@ -133,7 +130,6 @@ export default function DashboardResumen() {
         />
       </div>
 
-      {/* Ganancias mensuales */}
       <div className="mt-6 rounded-xl border border-sea/10 bg-foam p-5 sm:p-6">
         <GraficaIngresos
           datos={metricas.historico}
@@ -151,8 +147,6 @@ export default function DashboardResumen() {
             {verTabla ? "Ocultar tabla de datos" : "Ver tabla de datos"}
           </button>
 
-          {/* La tabla no es un extra: garantiza que los valores se puedan leer
-              sin depender de distinguir colores ni de pasar el cursor. */}
           {verTabla ? (
             <div className="mt-4 overflow-x-auto">
               <table className="w-full min-w-[320px] border-collapse text-sm">
@@ -180,7 +174,6 @@ export default function DashboardResumen() {
         </div>
       </div>
 
-      {/* Inventario y reservas */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
         <div className="rounded-xl border border-sea/10 bg-foam p-5 sm:p-6">
           <EstadoHabitaciones

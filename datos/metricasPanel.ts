@@ -1,16 +1,3 @@
-/**
- * Métricas del dashboard, calculadas EN VIVO desde los datos del panel de
- * gestión (reservas y habitaciones de `adminService`).
- *
- * No hay una segunda fuente de datos: si recepción aprueba un comprobante o
- * cambia una habitación a "Ocupada", el dashboard lo refleja en el acto.
- * Cuando el panel pase a Firestore, estas funciones siguen igual: reciben
- * las mismas listas, vengan de donde vengan.
- *
- * Son funciones puras (mismos datos → mismo resultado), así que se prueban
- * sin montar ningún componente.
- */
-
 import type { HabitacionAdmin, ReservaAdmin } from "../servicios/adminService";
 import type { ConteoEstado, EstadoHabitacion, ResumenMes } from "./metricas";
 
@@ -62,11 +49,8 @@ export function periodoActual(hoy: Date = new Date()): string {
 }
 
 /**
- * Ingresos confirmados agrupados por mes de check-in.
- *
- * Se rellenan los meses vacíos entre el primero y el último con datos, para
- * que la gráfica no se "salte" meses y haga creer que hubo continuidad.
- * El mes en curso siempre aparece, aunque todavía no tenga ingresos.
+ * Ingresos aprobados por mes de check-in. Rellena los meses vacíos e
+ * incluye siempre el mes en curso.
  */
 export function ingresosPorMes(
   reservas: ReservaAdmin[],
@@ -90,7 +74,7 @@ export function ingresosPorMes(
   const hasta = periodos[periodos.length - 1];
 
   const resultado: ResumenMes[] = [];
-  // Tope de seguridad: nunca más de 24 meses, aunque haya una fecha rara.
+  // Tope de 24 meses por si hay una fecha inválida.
   for (let p = desde, n = 0; p <= hasta && n < 24; p = siguientePeriodo(p), n++) {
     const datos = porPeriodo.get(p) ?? { ingresos: 0, reservas: 0 };
     resultado.push({ periodo: p, etiqueta: etiquetaDe(p), ...datos });
@@ -99,7 +83,6 @@ export function ingresosPorMes(
   return resultado;
 }
 
-/** Traduce los estados del panel a los del dashboard. */
 const MAPA_ESTADO: Record<HabitacionAdmin["status"], EstadoHabitacion> = {
   AVAILABLE: "disponible",
   OCCUPIED: "ocupada",

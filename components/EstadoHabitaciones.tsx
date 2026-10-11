@@ -11,14 +11,10 @@ import {
 type EstadoHabitacionesProps = {
   datos: ConteoEstado[];
   total: number;
-  /** Oculta título y subtítulo cuando el contenedor ya trae los suyos. */
   mostrarTitulo?: boolean;
 };
 
-/**
- * Por debajo de este porcentaje la etiqueta no cabe dentro del segmento.
- * No se recorta el texto: se deja que la leyenda lo cargue.
- */
+/** Porcentaje mínimo para que la etiqueta quepa dentro del segmento. */
 const MINIMO_PARA_ETIQUETA = 12;
 
 export default function EstadoHabitaciones({
@@ -28,8 +24,6 @@ export default function EstadoHabitaciones({
 }: EstadoHabitacionesProps) {
   const [activo, setActivo] = useState<string | null>(null);
 
-  // Orden fijo: el color sigue al estado, nunca a su tamaño. Si un estado
-  // cambia de cantidad, los demás no se repintan.
   const segmentos = ORDEN_ESTADOS.map((estado) => {
     const encontrado = datos.find((d) => d.estado === estado);
     return { estado, cantidad: encontrado?.cantidad ?? 0 };
@@ -48,8 +42,6 @@ export default function EstadoHabitaciones({
         </figcaption>
       ) : null}
 
-      {/* La separación entre segmentos la hace el hueco del fondo, no un borde:
-          un contorno agrega tinta que no es dato. */}
       <div
         className="mt-4 flex h-11 w-full gap-[2px] overflow-hidden rounded-md"
         role="img"
@@ -75,8 +67,6 @@ export default function EstadoHabitaciones({
               title={`${ETIQUETA_ESTADO[s.estado]}: ${s.cantidad} de ${total}`}
             >
               {cabe ? (
-                // Dentro de un relleno de color el texto va en blanco: es la
-                // única excepción a "el texto nunca lleva el color de la serie".
                 <span className="text-sm font-semibold text-white">
                   {s.cantidad}
                 </span>
@@ -86,8 +76,6 @@ export default function EstadoHabitaciones({
         })}
       </div>
 
-      {/* Leyenda: siempre presente con dos o más series. La identidad nunca
-          depende solo del color. */}
       <ul className="mt-4 grid list-none grid-cols-2 gap-x-4 gap-y-2.5 p-0 sm:grid-cols-4">
         {segmentos.map((s) => (
           <li

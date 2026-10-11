@@ -1,15 +1,3 @@
-/**
- * Inicialización del SDK de Firebase.
- *
- * Las credenciales salen de `.env.local`, que NO se sube al repositorio.
- * Cada quien crea el suyo a partir de `.env.local.example`.
- *
- * Sobre la apiKey: no es un secreto. Identifica al proyecto, no autoriza
- * nada, y Google la expone en el navegador a propósito. Lo que protege los
- * datos son las reglas de `firestore.rules`, que corren en el servidor.
- * Aun así va en el .env para no dejar credenciales dentro del código.
- */
-
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
@@ -23,12 +11,7 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-/**
- * `true` solo si están TODAS las credenciales.
- *
- * Esto permite que un compañero clone el repo sin `.env.local` y el sitio
- * siga funcionando con datos mock, en lugar de reventar al arrancar.
- */
+/** Sin `.env.local` completo, la app sigue funcionando con datos mock. */
 export const firebaseConfigurado: boolean = Object.values(config).every(
   (v) => typeof v === "string" && v.length > 0,
 );
@@ -45,8 +28,7 @@ function iniciar(): FirebaseApp {
 
   if (app) return app;
 
-  // getApps() evita reinicializar en cada recarga del Fast Refresh de Next,
-  // que si no lanza "Firebase App named '[DEFAULT]' already exists".
+  // Evita "Firebase App named '[DEFAULT]' already exists" con Fast Refresh.
   app = getApps().length
     ? getApp()
     : initializeApp(config as Record<keyof typeof config, string>);
@@ -54,13 +36,7 @@ function iniciar(): FirebaseApp {
   return app;
 }
 
-/**
- * Se inicializan de forma perezosa: solo cuando alguien los pide.
- *
- * Esto importa en Next, donde los módulos también se cargan en el servidor
- * durante el renderizado. Si inicializáramos al importar, un compañero sin
- * `.env.local` no podría ni abrir el sitio.
- */
+// Inicialización perezosa: Next también importa los módulos en el servidor.
 export function obtenerAuth(): Auth {
   return getAuth(iniciar());
 }

@@ -14,7 +14,6 @@ export type ReservaHistorial = {
   precioPorNoche: number;
 };
 
-/* Mock del historial del huésped */
 export const RESERVAS_HISTORIAL: ReservaHistorial[] = [
   {
     id: "res-001",

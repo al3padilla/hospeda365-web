@@ -2,30 +2,20 @@ import type { LucideIcon } from "lucide-react";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 type TarjetaMetricaProps = {
-  /** Sentencia corta, sin dos puntos al final. */
   etiqueta: string;
   /** Valor ya formateado. */
   valor: string;
   icono: LucideIcon;
   /** Variación porcentual contra el periodo anterior. */
   delta?: number;
-  /** Cómo se llama ese periodo, para que el delta signifique algo. */
   deltaPeriodo?: string;
-  /** Si subir es bueno. Para reservas pendientes, por ejemplo, no lo es. */
+  /** `false` cuando un aumento es negativo (ej. reservas pendientes). */
   subirEsBueno?: boolean;
-  /** Fracción 0–1. Dibuja un medidor bajo el valor. */
+  /** Fracción 0–1. */
   medidor?: number;
-  /** Texto auxiliar bajo el valor. */
   detalle?: string;
 };
 
-/**
- * Tarjeta de métrica (stat tile).
- *
- * El valor usa cifras proporcionales a propósito: `tabular-nums` da a cada
- * dígito el ancho de un cero, y a tamaño grande un número como "16" se ve
- * suelto. Las cifras tabulares se reservan para columnas que deben alinearse.
- */
 export default function TarjetaMetrica({
   etiqueta,
   valor,
@@ -38,7 +28,6 @@ export default function TarjetaMetrica({
 }: TarjetaMetricaProps) {
   const subio = delta !== undefined && delta > 0;
   const hayDelta = delta !== undefined && Math.abs(delta) >= 0.05;
-  // El color dice si la noticia es buena, no si el número subió.
   const deltaBueno = subio === subirEsBueno;
 
   return (
@@ -54,8 +43,6 @@ export default function TarjetaMetrica({
 
       {medidor !== undefined ? (
         <div className="mt-3.5">
-          {/* La pista es un paso más claro del mismo tono, no un gris neutro:
-              así el estado se lee a lo largo de toda la barra. */}
           <div
             className="h-1.5 w-full overflow-hidden rounded-full bg-sea/15"
             role="img"

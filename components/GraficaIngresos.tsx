@@ -5,31 +5,26 @@ import { formatearDinero, type ResumenMes } from "../datos/metricas";
 
 type GraficaIngresosProps = {
   datos: ResumenMes[];
-  /** Periodo en curso: se resalta y siempre lleva etiqueta. */
+  /** Se resalta y siempre lleva etiqueta. */
   periodoActual: string;
-  /** Oculta título y subtítulo cuando el contenedor ya trae los suyos. */
   mostrarTitulo?: boolean;
-  /** Color de la barra resaltada y de las demás. */
   color?: string;
   colorTenue?: string;
 };
 
-// Geometría del dibujo. El viewBox deja aire arriba para las etiquetas de
-// valor y a la izquierda para el eje, para que nada quede recortado.
 const ANCHO = 720;
 const ALTO = 250;
 const M = { arriba: 26, derecha: 14, abajo: 30, izquierda: 56 };
 const ANCHO_PLOT = ANCHO - M.izquierda - M.derecha;
 const ALTO_PLOT = ALTO - M.arriba - M.abajo;
 
-/** Una sola serie, un solo tono. Sin leyenda: el título dice qué se grafica. */
 const COLOR_BARRA = "#2a6fb0";
 const COLOR_BARRA_TENUE = "#9dc0e0";
 
-/** Tope del eje cuando no hay ningún ingreso: evita dividir entre cero. */
+/** Evita dividir entre cero cuando no hay ingresos. */
 const TOPE_MINIMO = 100;
 
-/** Redondea el tope a un número limpio para que las marcas del eje lo sean. */
+/** Redondea el tope del eje a un número limpio. */
 function topeEje(max: number): number {
   if (max <= 0) return TOPE_MINIMO;
   const magnitud = Math.pow(10, Math.floor(Math.log10(max)));
@@ -81,7 +76,6 @@ export default function GraficaIngresos({
           aria-label={`Gráfica de barras de ingresos mensuales, de ${datos[0].etiqueta} a ${datos[datos.length - 1].etiqueta}. Máximo ${formatearDinero(maximo)}.`}
           onMouseLeave={() => setActivo(null)}
         >
-          {/* Cuadrícula: línea fina continua, un paso fuera de la superficie */}
           {marcas.map((m) => (
             <g key={m}>
               <line
@@ -109,14 +103,11 @@ export default function GraficaIngresos({
             const alto = ALTO_PLOT - (y(d.ingresos) - M.arriba);
             const esActual = i === indiceActual;
             const resaltado = activo === i || esActual;
-            // Etiqueta solo en el máximo y en el mes en curso: un número sobre
-            // cada barra se vuelve ruido y nadie lo lee.
             const llevaEtiqueta = i === indiceMax || esActual;
 
             return (
               <g key={d.periodo}>
-                {/* Zona de detección más ancha que la barra, para que el
-                    cursor la encuentre sin puntería fina. */}
+                {/* Zona de hover más ancha que la barra. */}
                 <rect
                   x={xBanda(i)}
                   y={M.arriba}
@@ -135,7 +126,7 @@ export default function GraficaIngresos({
                   fill={resaltado ? color : colorTenue}
                   pointerEvents="none"
                 />
-                {/* Tapa el redondeo inferior: la barra nace cuadrada de la base */}
+                {/* Tapa el redondeo inferior de la barra. */}
                 <rect
                   x={xCentro(i) - anchoBarra / 2}
                   y={y(d.ingresos) + Math.max(2, alto) - 4}
@@ -174,7 +165,6 @@ export default function GraficaIngresos({
             );
           })}
 
-          {/* Línea base */}
           <line
             x1={M.izquierda}
             y1={y(0)}

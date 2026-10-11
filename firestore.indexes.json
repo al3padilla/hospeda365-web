@@ -1,6 +1,5 @@
 {
-  "//": "Índices compuestos de Cloud Firestore para Hospeda365.",
-  "//_nota": "Firestore crea índices de un solo campo automáticamente. Los compuestos (más de un campo en where/orderBy) hay que declararlos aquí o la consulta falla en tiempo de ejecución con un error que incluye un enlace para crearlo. Desplegar con: firebase deploy --only firestore:indexes",
+  "//": "Desplegar con: firebase deploy --only firestore:indexes",
 
   "indexes": [
     {

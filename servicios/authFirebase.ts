@@ -1,19 +1,3 @@
-/**
- * Implementación REAL del servicio de autenticación, con Firebase.
- *
- * Implementa EXACTAMENTE la misma interfaz `ServicioAuth` que el mock, así
- * que el Context, las páginas y los componentes no cambian ni una línea.
- * El cambio entre uno y otro vive en `servicios/index.ts`.
- *
- * Reparto de responsabilidades:
- *   Firebase Authentication → correo y contraseña (las contraseñas nunca
- *                             llegan a Firestore; Google las cifra)
- *   Firestore, users/{uid}  → el perfil: nombre, teléfono, rol, activo
- *
- * El UID que genera Authentication es el ID del documento en Firestore.
- * Por eso, con un usuario autenticado, su perfil se encuentra en una lectura.
- */
-
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -42,16 +26,9 @@ import {
   type Sesion,
 } from "./tiposAuth";
 
-/** Colección de perfiles. El id de cada documento es el UID de Auth. */
+/** El id de cada documento es el UID de Firebase Auth. */
 const COLECCION_USUARIOS = "users";
 
-/**
- * Traduce los códigos de Firebase a los NUESTROS.
- *
- * Gracias a esto la interfaz nunca depende del proveedor: las pantallas
- * siguen mostrando los mismos mensajes en español sin saber que existe
- * Firebase. Si mañana cambiamos de backend, solo se reescribe esta función.
- */
 function traducirError(codigoFirebase: string): CodigoErrorAuth {
   switch (codigoFirebase) {
     case "auth/invalid-credential":
@@ -73,9 +50,7 @@ function traducirError(codigoFirebase: string): CodigoErrorAuth {
   }
 }
 
-/** Convierte el documento de Firestore al modelo de la app. */
 function aUsuario(uid: string, datos: Record<string, unknown>): Usuario {
-  // Firestore devuelve Timestamp; la app trabaja con strings ISO.
   const aIso = (v: unknown): string =>
     v instanceof Timestamp ? v.toDate().toISOString() : new Date().toISOString();
 
@@ -91,13 +66,11 @@ function aUsuario(uid: string, datos: Record<string, unknown>): Usuario {
   };
 }
 
-/** Lee el perfil de Firestore y arma la sesión con el ID token real. */
 async function construirSesion(usuarioFb: UsuarioFirebase): Promise<Sesion> {
   const snap = await getDoc(doc(obtenerDb(), COLECCION_USUARIOS, usuarioFb.uid));
 
   if (!snap.exists()) {
-    // Existe en Authentication pero no tiene perfil. Pasa si alguien se creó
-    // a mano en la consola sin crear el documento.
+    // Usuario creado a mano en la consola de Auth sin documento de perfil.
     await signOut(obtenerAuth());
     throw new ErrorAuth(
       "usuario_no_encontrado",
@@ -135,7 +108,6 @@ export const authFirebase: ServicioAuth = {
 
   async registrar(datos: DatosRegistro): Promise<Sesion> {
     try {
-      // 1. Crear las credenciales en Firebase Authentication.
       const cred = await createUserWithEmailAndPassword(
         obtenerAuth(),
         datos.email.trim(),
@@ -146,9 +118,7 @@ export const authFirebase: ServicioAuth = {
         displayName: `${datos.nombre.trim()} ${datos.apellido.trim()}`,
       });
 
-      // 2. Crear el perfil en Firestore, con el UID como ID del documento.
-      //    El rol SIEMPRE es "huesped": las reglas de seguridad impiden que
-      //    alguien se auto-asigne admin llamando a la API directamente.
+      // El rol debe ser "huesped": firestore.rules rechaza cualquier otro.
       await setDoc(doc(obtenerDb(), COLECCION_USUARIOS, cred.user.uid), {
         email: datos.email.trim().toLowerCase(),
         nombre: datos.nombre.trim(),
@@ -173,9 +143,7 @@ export const authFirebase: ServicioAuth = {
   },
 
   async restaurarSesion(): Promise<Sesion | null> {
-    // Firebase persiste la sesión por su cuenta. Esperamos a que el SDK
-    // termine de restaurarla antes de decidir si hay usuario o no; si
-    // preguntáramos de inmediato, siempre diría que no hay nadie.
+    // currentUser es null hasta que el SDK termina de restaurar la sesión.
     const usuarioFb = await new Promise<UsuarioFirebase | null>((resolve) => {
       const cancelar = onAuthStateChanged(obtenerAuth(), (u) => {
         cancelar();
@@ -188,7 +156,6 @@ export const authFirebase: ServicioAuth = {
     try {
       return await construirSesion(usuarioFb);
     } catch {
-      // Perfil ausente o cuenta desactivada: se trata como "sin sesión".
       return null;
     }
   },
@@ -197,8 +164,6 @@ export const authFirebase: ServicioAuth = {
     usuarioId: string,
     cambios: Partial<Usuario>,
   ): Promise<Usuario> {
-    // Campos que el cliente no puede tocar. Las reglas también lo bloquean:
-    // esto es comodidad, la seguridad está en el servidor.
     const {
       id: _id,
       email: _email,

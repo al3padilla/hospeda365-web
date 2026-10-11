@@ -9,10 +9,7 @@ export type Habitacion = {
   highlights: string[];
 };
 
-/**
- * Precios de referencia en USD (mercado hotel de playa Centroamérica).
- * Datos temporales (mock); luego se reemplazan por la API REST.
- */
+/** Precios en USD. Mock hasta tener la API REST. */
 export const HABITACIONES_DESTACADAS: Habitacion[] = [
   {
     id: "basica",

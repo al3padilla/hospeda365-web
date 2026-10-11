@@ -1,13 +1,3 @@
-/**
- * Implementación MOCK del servicio de autenticación.
- *
- * Lee los usuarios de `datos/usuarios.ts` y simula latencia de red usando
- * los mismos `DELAYS` que ya usa el resto del sitio, para que los estados
- * de carga se vean igual que en el buscador de habitaciones.
- *
- * ⚠️ Sólo para desarrollo. Ver la nota de seguridad en `datos/usuarios.ts`.
- */
-
 import { USUARIOS_MOCK, type Usuario, type UsuarioMock } from "../datos/usuarios";
 import { DELAYS } from "../datos/carga";
 import {
@@ -18,26 +8,20 @@ import {
   type Sesion,
 } from "./tiposAuth";
 
-/** Clave donde se guarda la sesión en el navegador. */
 const CLAVE_SESION = "hospeda365.sesion";
 
-/**
- * Copia mutable en memoria. Así un usuario registrado durante la sesión
- * puede iniciar sesión después, sin escribir en el archivo de datos.
- */
+/** Copia en memoria para que los usuarios registrados puedan iniciar sesión. */
 const usuarios: UsuarioMock[] = USUARIOS_MOCK.map((u) => ({ ...u }));
 
 function esperar(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/** Quita la contraseña antes de devolver el usuario a la aplicación. */
 function sinPassword(usuario: UsuarioMock): Usuario {
   const { password: _password, ...resto } = usuario;
   return resto;
 }
 
-/** Token falso con la misma forma que un JWT (header.payload.firma). */
 function generarToken(usuarioId: string): string {
   const payload = btoa(JSON.stringify({ sub: usuarioId, iat: Date.now() }));
   return `mock.${payload}.firma`;
@@ -54,19 +38,12 @@ function crearSesion(usuario: UsuarioMock): Sesion {
   };
 }
 
-/**
- * Guarda la sesión en `localStorage`.
- *
- * Va envuelto en try/catch porque en modo incógnito, con cookies
- * bloqueadas o durante el renderizado en servidor, `localStorage`
- * no existe o lanza excepción. Que falle el guardado no debe
- * romper el inicio de sesión.
- */
+// localStorage puede no existir (SSR) o lanzar (incógnito); no debe romper el login.
 function guardarSesion(sesion: Sesion): void {
   try {
     localStorage.setItem(CLAVE_SESION, JSON.stringify(sesion));
   } catch {
-    // Ignorado a propósito: la sesión sigue viva en memoria.
+    // Ignorado: la sesión sigue en memoria.
   }
 }
 
@@ -74,7 +51,7 @@ function borrarSesion(): void {
   try {
     localStorage.removeItem(CLAVE_SESION);
   } catch {
-    // Ignorado a propósito.
+    // Ignorado.
   }
 }
 
@@ -85,9 +62,7 @@ export const authMock: ServicioAuth = {
     const normalizado = email.trim().toLowerCase();
     const usuario = usuarios.find((u) => u.email.toLowerCase() === normalizado);
 
-    // Mismo mensaje para "no existe" y "contraseña incorrecta": no le
-    // revelamos a un atacante qué correos están registrados.
-    // Firebase Authentication se comporta igual.
+    // Mismo error para ambos casos: no revela qué correos están registrados.
     if (!usuario || usuario.password !== password) {
       throw new ErrorAuth(
         "credenciales_invalidas",
@@ -123,8 +98,6 @@ export const authMock: ServicioAuth = {
       nombre: datos.nombre.trim(),
       apellido: datos.apellido.trim(),
       telefono: datos.telefono.trim() || null,
-      // Todo registro público crea un huésped. Los roles de personal los
-      // asigna un administrador; nunca se eligen desde el formulario.
       rol: "huesped",
       activo: true,
       creadoEn: new Date().toISOString(),
@@ -163,7 +136,6 @@ export const authMock: ServicioAuth = {
 
       return sesion;
     } catch {
-      // JSON corrupto: lo descartamos en lugar de romper el arranque.
       borrarSesion();
       return null;
     }
@@ -182,7 +154,6 @@ export const authMock: ServicioAuth = {
 
     const actual = usuarios[indice];
 
-    // Campos que el usuario NO puede cambiar por su cuenta.
     const { id: _id, email: _email, rol: _rol, ...permitidos } = cambios;
 
     const actualizado: UsuarioMock = { ...actual, ...permitidos };

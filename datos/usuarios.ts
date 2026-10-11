@@ -1,21 +1,8 @@
-/**
- * Usuarios de prueba (mock) del sistema.
- *
- * Datos temporales para desarrollo; luego se reemplazan por Firebase
- * Authentication + Firestore. Ver `docs/firebase-firestore.md`.
- *
- * ⚠️ Las contraseñas están en texto plano A PROPÓSITO: esto es un mock.
- * En Firebase las contraseñas nunca se guardan en la base de datos —
- * las maneja Firebase Authentication, que aplica hashing y nunca las expone.
- */
+// Solo para desarrollo: contraseñas en texto plano porque es un mock.
 
-/** Roles del sistema. Determinan qué puede ver y hacer cada usuario. */
 export type Rol = "huesped" | "recepcionista" | "admin";
 
-/**
- * Usuario tal como lo consume la aplicación.
- * NUNCA incluye la contraseña.
- */
+/** Nunca incluye la contraseña. */
 export type Usuario = {
   id: string;
   email: string;
@@ -24,11 +11,10 @@ export type Usuario = {
   telefono: string | null;
   rol: Rol;
   activo: boolean;
-  /** Fecha ISO 8601. En Firestore será un Timestamp. */
+  /** Fecha ISO 8601. */
   creadoEn: string;
 };
 
-/** Registro interno del mock: el usuario más su contraseña de prueba. */
 export type UsuarioMock = Usuario & { password: string };
 
 export const USUARIOS_MOCK: UsuarioMock[] = [
@@ -95,13 +81,13 @@ export const USUARIOS_MOCK: UsuarioMock[] = [
     apellido: "Ramírez",
     telefono: "+503 7000 0005",
     rol: "huesped",
-    // Cuenta desactivada: sirve para probar el bloqueo de acceso.
+    // Para probar el bloqueo de cuentas desactivadas.
     activo: false,
     creadoEn: "2026-05-01T07:30:00.000Z",
   },
 ];
 
-/** Credenciales que se muestran en la pantalla de login para la demo. */
+/** Se muestran en la pantalla de login para la demo. */
 export const CUENTAS_DEMO = [
   {
     etiqueta: "Administrador",

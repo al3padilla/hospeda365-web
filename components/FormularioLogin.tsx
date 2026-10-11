@@ -12,7 +12,6 @@ import { Spinner } from "./Loader";
 import BannerError from "./BannerError";
 import CampoAuth from "./CampoAuth";
 
-/** A dónde va cada rol después de iniciar sesión. */
 const DESTINO_POR_ROL = {
   admin: "/admin",
   recepcionista: "/admin",
@@ -27,7 +26,7 @@ export default function FormularioLogin() {
   const [datos, setDatos] = useState<Credenciales>({ email: "", password: "" });
   const [errores, setErrores] = useState<ErroresCampo<Credenciales>>({});
 
-  // Si ya hay sesión activa al entrar, no tiene sentido mostrar el login.
+  // También redirige tras un login exitoso, cuando el Context actualiza `usuario`.
   useEffect(() => {
     if (estaAutenticado && usuario) {
       router.replace(DESTINO_POR_ROL[usuario.rol]);
@@ -37,7 +36,6 @@ export default function FormularioLogin() {
   function actualizar(campo: keyof Credenciales, valor: string) {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
 
-    // Limpia el error de ese campo en cuanto el usuario lo corrige.
     if (errores[campo]) setErrores((prev) => ({ ...prev, [campo]: undefined }));
     if (error) limpiarError();
   }
@@ -55,8 +53,6 @@ export default function FormularioLogin() {
       password: datos.password,
     });
 
-    // El Context ya guardó la sesión; sólo navegamos.
-    // El useEffect superior redirige según el rol cuando el Context actualiza usuario.
     if (!ok) return;
   }
 
