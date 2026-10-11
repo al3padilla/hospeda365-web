@@ -1,17 +1,4 @@
-/**
- * Pruebas funcionales del módulo de autenticación.
- *
- * Cubre: validadores de formularios, reducer del estado global y
- * el servicio mock (login, registro, sesión, permisos).
- *
- * CÓMO EJECUTARLAS:
- *
- *     npx tsx scripts/pruebas-auth.ts
- *
- * No requiere jest ni vitest: `tsx` ejecuta TypeScript directamente.
- * Si el equipo adopta un runner después, estas pruebas se migran casi
- * sin cambios (sólo envolver cada `prueba()` en `it()`).
- */
+// Ejecutar con: npx tsx scripts/pruebas-auth.ts
 
 import assert from "node:assert/strict";
 
@@ -52,9 +39,7 @@ function prueba(nombre: string, fn: () => void | Promise<void>): Promise<void> {
 }
 
 async function main() {
-  // =========================================================================
   console.log("\n── VALIDADORES ──");
-  // =========================================================================
 
   await prueba("login: rechaza email y contraseña vacíos", () => {
     const e = validarLogin({ email: "", password: "" });
@@ -119,9 +104,7 @@ async function main() {
     assert.equal(fuerzaPassword("Abcdefghijk1"), 3);
   });
 
-  // =========================================================================
   console.log("\n── REDUCER (estado global) ──");
-  // =========================================================================
 
   const sesionFalsa: Sesion = {
     usuario: {
@@ -219,9 +202,7 @@ async function main() {
     assert.equal(nombreCompleto(estadoInicial), "");
   });
 
-  // =========================================================================
   console.log("\n── SERVICIO MOCK ──");
-  // =========================================================================
 
   await prueba("login correcto devuelve sesión sin exponer la contraseña", async () => {
     const s = await authMock.login({
@@ -328,7 +309,6 @@ async function main() {
     );
   });
 
-  // =========================================================================
   console.log(`\n${"═".repeat(50)}`);
   console.log(`RESULTADO: ${pasadas} pasadas, ${fallidas} fallidas`);
   console.log("═".repeat(50));

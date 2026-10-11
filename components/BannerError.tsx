@@ -7,10 +7,7 @@ type BannerErrorProps = {
   onCerrar?: () => void;
 };
 
-/**
- * Error que viene del servidor (credenciales inválidas, cuenta desactivada…).
- * Se distingue de los errores por campo: este afecta al formulario completo.
- */
+/** Error general del formulario (no de un campo específico). */
 export default function BannerError({ mensaje, onCerrar }: BannerErrorProps) {
   return (
     <div

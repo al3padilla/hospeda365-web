@@ -25,33 +25,19 @@ import {
   type ErrorVisible,
 } from "./authReducer";
 
-/**
- * ESTADO GLOBAL de autenticación (Context API + useReducer).
- *
- * Uso en cualquier componente cliente:
- *
- *     const { usuario, login, logout, estaAutenticado } = useAuth();
- *
- * Detalle de rendimiento: el `value` se memoriza con `useMemo` y las
- * acciones con `useCallback`. Sin eso, cada render del Provider crearía
- * un objeto nuevo y re-renderizaría TODOS los componentes que consumen
- * el contexto, aunque el estado no haya cambiado.
- */
 type AuthContextValue = {
-  // Estado
   state: AuthState;
   usuario: Usuario | null;
   token: string | null;
   error: ErrorVisible | null;
 
-  // Valores derivados
   estaAutenticado: boolean;
   estaCargando: boolean;
   esPersonal: boolean;
   nombreCompleto: string;
   iniciales: string;
 
-  // Acciones (devuelven `true` si salió bien, para que la página navegue)
+  // Devuelven `true` si salió bien, para que la página navegue.
   login: (credenciales: Credenciales) => Promise<boolean>;
   registrar: (datos: DatosRegistro) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -64,7 +50,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, estadoInicial);
 
-  // Al montar, intenta recuperar la sesión guardada en el navegador.
   useEffect(() => {
     let cancelado = false;
 
@@ -77,14 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })();
 
-    // Evita actualizar el estado si el componente se desmontó mientras
-    // la promesa seguía en vuelo.
     return () => {
       cancelado = true;
     };
   }, []);
 
-  /** Normaliza cualquier excepción a nuestro formato de error. */
   const manejarError = useCallback((error: unknown) => {
     const codigo =
       error instanceof ErrorAuth ? error.codigo : "error_desconocido";
@@ -129,7 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await servicioAuth.logout();
     } finally {
-      // Pase lo que pase con el servidor, la sesión local se cierra.
       dispatch({ type: "SESION_CERRADA" });
     }
   }, []);
@@ -179,13 +160,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/**
- * Hook para consumir el contexto.
- *
- * Lanza un error explícito si se usa fuera del Provider: es mucho mejor
- * un mensaje claro en desarrollo que un `null` silencioso que explota
- * tres componentes más abajo.
- */
 export function useAuth(): AuthContextValue {
   const contexto = useContext(AuthContext);
 

@@ -1,4 +1,4 @@
-/** Delays simulados (demo / rúbrica) para estados de carga visibles. */
+/** Delays simulados para que los estados de carga sean visibles. */
 export const DELAYS = {
   ruta: 900,
   busqueda: 1200,

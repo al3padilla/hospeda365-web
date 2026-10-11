@@ -1,18 +1,9 @@
-/**
- * Validación de los formularios de autenticación.
- *
- * Se valida en el cliente para dar feedback inmediato, PERO estas reglas
- * se repiten del lado del servidor (Firebase Auth + reglas de Firestore).
- * La validación del cliente es comodidad, no seguridad.
- */
-
 import type { Credenciales, DatosRegistro } from "../servicios/tiposAuth";
 
-/** Errores por campo. Si el objeto está vacío, el formulario es válido. */
+/** Objeto vacío = formulario válido. */
 export type ErroresCampo<T> = Partial<Record<keyof T, string>>;
 
-// Formato de correo. Deliberadamente permisivo: el correo real se confirma
-// por verificación de email, no por una expresión regular.
+// Permisivo a propósito: el correo real se confirma por verificación.
 const REGEX_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 // Teléfono de El Salvador: 8 dígitos, opcionalmente con +503.
@@ -45,10 +36,7 @@ export function requisitosFaltantes(password: string): string[] {
   return faltantes;
 }
 
-/**
- * Fuerza de la contraseña, para el indicador visual.
- * 0 = vacía, 1 = débil, 2 = media, 3 = fuerte.
- */
+/** 0 = vacía, 1 = débil, 2 = media, 3 = fuerte. */
 export function fuerzaPassword(password: string): 0 | 1 | 2 | 3 {
   if (password.length === 0) return 0;
 
@@ -125,7 +113,6 @@ export function validarRegistro(
   return errores;
 }
 
-/** `true` si no hay ningún error. */
 export function sinErrores<T>(errores: ErroresCampo<T>): boolean {
   return Object.keys(errores).length === 0;
 }

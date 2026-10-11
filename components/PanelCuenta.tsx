@@ -22,17 +22,10 @@ type Opcion = {
   descripcion: string;
   href: string;
   icono: LucideIcon;
-  /** `false` mientras el módulo del compañero no exista. */
+  /** `false` mientras el módulo no exista: se muestra pero no navega. */
   disponible: boolean;
 };
 
-/**
- * Menú por rol.
- *
- * Cada entrada con `disponible: false` es un punto de integración que espera
- * al módulo correspondiente del equipo. Cuando ese módulo exista, se cambia
- * el `href` y se pone `disponible: true`.
- */
 const OPCIONES_POR_ROL: Record<Rol, Opcion[]> = {
   huesped: [
     {
@@ -125,13 +118,10 @@ export default function PanelCuenta() {
   const { usuario, nombreCompleto, iniciales, estaAutenticado, state, logout } =
     useAuth();
 
-  // Ruta protegida: sin sesión, de vuelta al login.
   useEffect(() => {
     if (state.estado === "no_autenticado") router.replace("/login");
   }, [state.estado, router]);
 
-  // Mientras se restaura la sesión guardada, evitamos el parpadeo de
-  // mandar al login a alguien que sí estaba autenticado.
   if (state.estado === "inicializando") {
     return <PageLoader titulo="Verificando tu sesión…" />;
   }
@@ -144,7 +134,6 @@ export default function PanelCuenta() {
 
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-12">
-      {/* Cabecera con el usuario de la sesión */}
       <header className="animate-fade-up mb-8 flex flex-col items-start gap-4 rounded-xl border border-sea/10 bg-foam p-6 sm:flex-row sm:items-center">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-sea text-xl font-bold text-white">
           {iniciales}
@@ -211,7 +200,6 @@ export default function PanelCuenta() {
             </>
           );
 
-          // Los módulos que aún no existen se muestran, pero no navegan.
           return opcion.disponible ? (
             <Link
               key={opcion.titulo}

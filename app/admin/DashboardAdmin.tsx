@@ -15,17 +15,9 @@ type DashboardAdminProps = {
   rooms: HabitacionAdmin[];
 };
 
-/** Colores del panel de gestión, para que la gráfica no desentone. */
 const COLOR_PANEL = "#176f85";
 const COLOR_PANEL_TENUE = "#a8d0da";
 
-/**
- * Dashboard administrativo dentro de /admin.
- *
- * Recibe las mismas reservas y habitaciones que usa el panel de gestión, así
- * que todo lo que se muestra aquí está calculado en vivo: si recepción aprueba
- * un comprobante o cambia el estado de una habitación, el dashboard cambia.
- */
 export default function DashboardAdmin({ reservations, rooms }: DashboardAdminProps) {
   const r = useMemo(() => resumirPanel(reservations, rooms), [reservations, rooms]);
   const actual = periodoActual();
@@ -60,7 +52,6 @@ export default function DashboardAdmin({ reservations, rooms }: DashboardAdminPr
 
   return (
     <>
-      {/* Tarjetas con el mismo estilo que las del panel principal */}
       <div className={styles.cards}>
         {tarjetas.map((t) => {
           const Icono = t.icono;
@@ -73,8 +64,6 @@ export default function DashboardAdmin({ reservations, rooms }: DashboardAdminPr
                 {t.detalle}
               </small>
               {t.medidor !== undefined ? (
-                // La pista es un paso claro del mismo tono: el estado se lee
-                // a lo largo de toda la barra.
                 <div
                   className="col-span-2 mt-2 h-1.5 overflow-hidden rounded-full bg-[#dcebef]"
                   role="img"
