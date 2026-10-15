@@ -6,6 +6,7 @@ import { urlConfirmacion } from "../datos/reserva";
 import { useBloqueoModal } from "../hooks/useBloqueoModal";
 import HabitacionModal from "./HabitacionModal";
 import FotoLightbox from "./FotoLightbox";
+import { pluralizar } from "../datos/texto";
 
 type RoomCardProps = {
   id: string;
@@ -84,7 +85,7 @@ export default function RoomCard({
           </p>
           <div className="flex items-center justify-between text-sm">
             <span className="text-mist">
-              Hasta {capacity} persona{capacity === 1 ? "" : "s"}
+              Hasta {pluralizar(capacity, "persona")}
             </span>
             <span className="font-semibold text-sea">
               ${pricePerNight.toLocaleString("es-MX")}

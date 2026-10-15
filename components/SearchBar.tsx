@@ -10,6 +10,7 @@ import GuestsPicker, {
 import { Spinner } from "./Loader";
 import { useHabitaciones } from "../contexto/HabitacionesContext";
 import type { Habitacion } from "../datos/habitaciones";
+import { pluralizar } from "../datos/texto";
 
 function mensajeResultado(
   habitaciones: Habitacion[],
@@ -18,19 +19,19 @@ function mensajeResultado(
 ): string {
   const disponibles = habitaciones.filter((h) => h.capacity >= personas);
   const detalle = [
-    `${huespedes.adultos} adulto${huespedes.adultos === 1 ? "" : "s"}`,
+    pluralizar(huespedes.adultos, "adulto"),
     huespedes.ninos
-      ? `${huespedes.ninos} niño${huespedes.ninos === 1 ? "" : "s"}`
+      ? pluralizar(huespedes.ninos, "niño")
       : null,
     huespedes.bebes
-      ? `${huespedes.bebes} bebé${huespedes.bebes === 1 ? "" : "s"}`
+      ? pluralizar(huespedes.bebes, "bebé")
       : null,
   ]
     .filter(Boolean)
     .join(", ");
 
   return disponibles.length > 0
-    ? `${disponibles.length} habitación${disponibles.length === 1 ? "" : "es"} · ${detalle}`
+    ? `${pluralizar(disponibles.length, "habitación", "habitaciones")} · ${detalle}`
     : `No hay habitaciones para ${personas} o más huéspedes (${detalle})`;
 }
 

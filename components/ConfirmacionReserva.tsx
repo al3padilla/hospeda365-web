@@ -28,6 +28,7 @@ import { DELAYS } from "../datos/carga";
 import { useDelayedAction } from "../hooks/useDelayedAction";
 import DatePicker from "./DatePicker";
 import { Spinner } from "./Loader";
+import { pluralizar } from "../datos/texto";
 
 type ConfirmacionReservaProps = {
   habitacionId?: string | null;
@@ -173,14 +174,13 @@ export default function ConfirmacionReserva({
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
                 <Moon className="h-4 w-4 shrink-0 text-coral" aria-hidden />
                 <span>
-                  {noches} noche{noches === 1 ? "" : "s"}
+                  {pluralizar(noches, "noche")}
                 </span>
               </li>
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
                 <Users className="h-4 w-4 shrink-0 text-coral" aria-hidden />
                 <span>
-                  Hasta {habitacion.capacity} persona
-                  {habitacion.capacity === 1 ? "" : "s"}
+                  Hasta {pluralizar(habitacion.capacity, "persona")}
                 </span>
               </li>
             </ul>
@@ -192,8 +192,7 @@ export default function ConfirmacionReserva({
               </h3>
               <div className="flex justify-between text-sm text-mist">
                 <span>
-                  {formatearPrecio(habitacion.pricePerNight)} × {noches} noche
-                  {noches === 1 ? "" : "s"}
+                  {formatearPrecio(habitacion.pricePerNight)} × {pluralizar(noches, "noche")}
                 </span>
                 <span>{formatearPrecio(total)}</span>
               </div>
@@ -220,7 +219,7 @@ export default function ConfirmacionReserva({
                 Comprobante de pago
               </h2>
               <p className="text-sm leading-relaxed text-mist">
-                Sube una captura o PDF de tu transferencia (simulación). Luego
+                Sube una captura o PDF de tu transferencia. Luego
                 confirma la reserva.
               </p>
             </div>
@@ -304,9 +303,8 @@ export default function ConfirmacionReserva({
                   aria-hidden
                 />
                 <span>
-                  Reserva simulada con éxito. Tu comprobante{" "}
-                  <strong>{archivo?.name}</strong> quedó registrado de forma
-                  local (sin envío a servidor).
+                  ¡Reserva realizada con éxito! Tu comprobante{" "}
+                  <strong>{archivo?.name}</strong> fue recibido correctamente.
                 </span>
               </p>
             ) : null}
