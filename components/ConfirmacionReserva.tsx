@@ -25,6 +25,7 @@ import {
 } from "../datos/reserva";
 import DatePicker from "./DatePicker";
 import { Spinner } from "./Loader";
+import { pluralizar } from "../datos/texto";
 
 type ConfirmacionReservaProps = {
   habitacionId?: string | null;
@@ -151,12 +152,16 @@ export default function ConfirmacionReserva({
 
             <ul className="grid gap-3 text-sm sm:grid-cols-2">
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
-                <Moon className="h-4 w-4 text-coral" aria-hidden />
-                {noches} noche{noches === 1 ? "" : "s"}
+                <Moon className="h-4 w-4 shrink-0 text-coral" aria-hidden />
+                <span>
+                  {pluralizar(noches, "noche")}
+                </span>
               </li>
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
-                <Users className="h-4 w-4 text-coral" aria-hidden />
-                Hasta {habitacion.capacity} personas
+                <Users className="h-4 w-4 shrink-0 text-coral" aria-hidden />
+                <span>
+                  Hasta {pluralizar(habitacion.capacity, "persona")}
+                </span>
               </li>
             </ul>
 
@@ -167,8 +172,7 @@ export default function ConfirmacionReserva({
               </h3>
               <div className="flex justify-between text-sm text-mist">
                 <span>
-                  {formatearPrecio(habitacion.pricePerNight)} × {noches} noche
-                  {noches === 1 ? "" : "s"}
+                  {formatearPrecio(habitacion.pricePerNight)} × {pluralizar(noches, "noche")}
                 </span>
                 <span>{formatearPrecio(total)}</span>
               </div>
@@ -191,8 +195,9 @@ export default function ConfirmacionReserva({
               <h2 className="font-[family-name:var(--font-display)] text-2xl text-sea">
                 Comprobante de pago
               </h2>
-              <p className="mt-1 text-sm text-mist">
-                El nombre del archivo se registra con la reserva para su validación.
+              <p className="text-sm leading-relaxed text-mist">
+                Sube una captura o PDF de tu transferencia. Luego
+                confirma la reserva.
               </p>
             </div>
 
@@ -255,7 +260,8 @@ export default function ConfirmacionReserva({
               <p className="flex gap-2 rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-coral" aria-hidden />
                 <span>
-                  Reserva registrada: <strong>{codigoReserva}</strong>.
+                  ¡Reserva realizada con éxito! Tu comprobante{" "}
+                  <strong>{archivo?.name}</strong> fue recibido correctamente.
                 </span>
               </p>
             ) : null}

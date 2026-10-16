@@ -7,15 +7,16 @@ import {
   useHabitaciones,
   type CriteriosBusqueda,
 } from "../contexto/HabitacionesContext";
+import { pluralizar } from "../datos/texto";
 
 function DetalleFiltro({ busqueda }: { busqueda: CriteriosBusqueda }) {
   const huespedes = [
-    `${busqueda.adultos} adulto${busqueda.adultos === 1 ? "" : "s"}`,
+    pluralizar(busqueda.adultos, "adulto"),
     busqueda.ninos > 0
-      ? `${busqueda.ninos} niño${busqueda.ninos === 1 ? "" : "s"}`
+      ? pluralizar(busqueda.ninos, "niño")
       : null,
     busqueda.bebes > 0
-      ? `${busqueda.bebes} bebé${busqueda.bebes === 1 ? "" : "s"}`
+      ? pluralizar(busqueda.bebes, "bebé")
       : null,
   ]
     .filter(Boolean)
@@ -79,7 +80,9 @@ export default function HabitacionesDestacadas() {
       ) : habitacionesFiltradas.length === 0 ? (
         <p className="rounded-xl border border-dashed border-sea/20 bg-foam py-12 text-center text-mist">
           No hay habitaciones disponibles para{" "}
-          {busqueda?.personas ?? "ese número de"} personas. Prueba con menos
+          {busqueda
+            ? pluralizar(busqueda.personas, "persona")
+            : "ese número de personas"}. Prueba con menos
           huéspedes o quita el filtro.
         </p>
       ) : (
