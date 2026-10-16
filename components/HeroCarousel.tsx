@@ -66,7 +66,7 @@ export default function HeroCarousel() {
           </a>
           <a
             href="#habitaciones"
-            className="border border-white/70 text-white px-7 py-3 rounded-md font-semibold tracking-wide hover:bg-white/10 transition"
+            className="border border-white/70 text-white px-7 py-3 rounded-md font-semibold tracking-wide hover:bg-white hover:text-coral hover:border-white transition"
           >
             Ver habitaciones
           </a>
