@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
 import {
   CalendarRange,
   CheckCircle2,
@@ -10,10 +11,11 @@ import {
   XCircle,
 } from "lucide-react";
 import {
-  RESERVAS_HISTORIAL,
   type EstadoReserva,
   type ReservaHistorial,
 } from "../datos/historialReservas";
+import { useReservas } from "../contexto/ReservasContext";
+import { useAuth } from "../contexto/AuthContext";
 import { formatearFecha } from "../datos/fechas";
 import { formatearPrecio } from "../datos/reserva";
 import { useBloqueoModal } from "../hooks/useBloqueoModal";
@@ -114,7 +116,30 @@ function ReservaCard({
 }
 
 export default function HistorialReservas() {
-  const reservas = RESERVAS_HISTORIAL;
+  const { estaAutenticado, estaCargando } = useAuth();
+  const { reservas: reservasFirestore, cargando, error } = useReservas();
+  const reservas = useMemo<ReservaHistorial[]>(
+    () =>
+      reservasFirestore.map((reserva) => ({
+        id: reserva.id,
+        habitacionNombre: reserva.roomTitle,
+        imagenUrl: reserva.roomImageUrl,
+        checkIn: reserva.checkIn,
+        checkOut: reserva.checkOut,
+        total: reserva.amount,
+        estado:
+          reserva.status === "CANCELLED" || reserva.status === "REJECTED"
+            ? "cancelada"
+            : reserva.status === "PENDING"
+              ? "pendiente"
+              : "confirmada",
+        adultos: reserva.adults,
+        ninos: reserva.children,
+        bebes: reserva.babies,
+        precioPorNoche: reserva.pricePerNight,
+      })),
+    [reservasFirestore],
+  );
   const [seleccionada, setSeleccionada] = useState<ReservaHistorial | null>(
     null,
   );
@@ -138,7 +163,22 @@ export default function HistorialReservas() {
         </p>
       </header>
 
-      {reservas.length === 0 ? (
+      {estaCargando || cargando ? (
+        <p className="rounded-xl border border-sea/10 bg-foam py-16 text-center text-mist">
+          Cargando reservas…
+        </p>
+      ) : !estaAutenticado ? (
+        <p className="rounded-xl border border-sea/10 bg-foam py-16 text-center text-mist">
+          <Link href="/login" className="font-semibold text-coral">
+            Inicia sesión
+          </Link>{" "}
+          para consultar tus reservas.
+        </p>
+      ) : error ? (
+        <p className="rounded-xl border border-red-200 bg-red-50 py-16 text-center text-red-700">
+          {error}
+        </p>
+      ) : reservas.length === 0 ? (
         <p className="rounded-xl border border-dashed border-sea/20 bg-foam py-16 text-center text-mist">
           Aún no tienes reservas registradas.
         </p>

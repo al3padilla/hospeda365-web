@@ -1,11 +1,7 @@
 "use client";
 
-import {
-  useState,
-  type ChangeEvent,
-  type DragEvent,
-  type FormEvent,
-} from "react";
+import Link from "next/link";
+import { useState, type ChangeEvent, type FormEvent } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -17,15 +13,16 @@ import {
   Upload,
   Users,
 } from "lucide-react";
+
+import { useAuth } from "../contexto/AuthContext";
+import { useHabitaciones } from "../contexto/HabitacionesContext";
+import { useReservas } from "../contexto/ReservasContext";
 import {
-  armarResumen,
   calcularNoches,
   calcularTotal,
+  fechasPorDefecto,
   formatearPrecio,
-  obtenerHabitacionPorId,
 } from "../datos/reserva";
-import { DELAYS } from "../datos/carga";
-import { useDelayedAction } from "../hooks/useDelayedAction";
 import DatePicker from "./DatePicker";
 import { Spinner } from "./Loader";
 
@@ -40,21 +37,21 @@ export default function ConfirmacionReserva({
   checkInInicial,
   checkOutInicial,
 }: ConfirmacionReservaProps) {
-  const habitacion = obtenerHabitacionPorId(habitacionId);
-  const inicial = armarResumen(habitacionId, checkInInicial, checkOutInicial);
-  const { runAfter } = useDelayedAction();
-
-  const [checkIn, setCheckIn] = useState(inicial.checkIn);
-  const [checkOut, setCheckOut] = useState(inicial.checkOut);
+  const { obtenerPorId, cargando: cargandoHabitaciones } = useHabitaciones();
+  const { estaAutenticado } = useAuth();
+  const { crearReserva, guardando, error } = useReservas();
+  const habitacion = obtenerPorId(habitacionId);
+  const [checkIn, setCheckIn] = useState(
+    () => checkInInicial || fechasPorDefecto().checkIn,
+  );
+  const [checkOut, setCheckOut] = useState(
+    () => checkOutInicial || fechasPorDefecto().checkOut,
+  );
   const [archivo, setArchivo] = useState<File | null>(null);
-  const [confirmado, setConfirmado] = useState(false);
-  const [arrastrando, setArrastrando] = useState(false);
-  const [subiendo, setSubiendo] = useState(false);
-  const [enviando, setEnviando] = useState(false);
+  const [codigoReserva, setCodigoReserva] = useState<string | null>(null);
 
   const noches = calcularNoches(checkIn, checkOut);
-  const total = calcularTotal(habitacion.pricePerNight, noches);
-  const ocupado = subiendo || enviando;
+  const total = habitacion ? calcularTotal(habitacion.pricePerNight, noches) : 0;
 
   function actualizarFechas(campo: "in" | "out", value: string) {
     if (campo === "in") {
@@ -63,51 +60,42 @@ export default function ConfirmacionReserva({
     } else {
       setCheckOut(value);
     }
-    setConfirmado(false);
-  }
-
-  function procesarArchivo(file: File | null) {
-    if (!file || ocupado) return;
-    setSubiendo(true);
-    setConfirmado(false);
-    setArchivo(null);
-
-    runAfter(DELAYS.subida, () => {
-      setArchivo(file);
-      setSubiendo(false);
-    });
+    setCodigoReserva(null);
   }
 
   function onFileChange(event: ChangeEvent<HTMLInputElement>) {
-    procesarArchivo(event.target.files?.[0] ?? null);
-    event.target.value = "";
+    setArchivo(event.target.files?.[0] ?? null);
+    setCodigoReserva(null);
   }
 
-  function onDrop(event: DragEvent<HTMLLabelElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setArrastrando(false);
-    procesarArchivo(event.dataTransfer.files?.[0] ?? null);
-  }
+    if (!estaAutenticado || !habitacion || !archivo || guardando) return;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!archivo || ocupado) return;
-
-    setEnviando(true);
-    setConfirmado(false);
-
-    runAfter(DELAYS.confirmar, () => {
-      console.log({
-        habitacion: habitacion.id,
-        checkIn,
-        checkOut,
-        noches,
-        total,
-        comprobante: archivo.name,
-      });
-      setEnviando(false);
-      setConfirmado(true);
+    const id = await crearReserva({
+      roomId: habitacion.id,
+      roomNumber: habitacion.number,
+      roomTitle: habitacion.name,
+      roomImageUrl: habitacion.imageUrl,
+      checkIn,
+      checkOut,
+      adults: 1,
+      children: 0,
+      babies: 0,
+      nights: noches,
+      pricePerNight: habitacion.pricePerNight,
+      amount: total,
+      proof: archivo.name,
     });
+    setCodigoReserva(id);
+  }
+
+  if (cargandoHabitaciones) {
+    return <div className="py-20 text-center text-mist">Cargando habitación…</div>;
+  }
+
+  if (!habitacion) {
+    return <div className="py-20 text-center text-mist">Habitación no encontrada.</div>;
   }
 
   return (
@@ -120,27 +108,21 @@ export default function ConfirmacionReserva({
           Confirmación de reserva
         </h1>
         <p className="leading-relaxed text-mist">
-          Revisa el resumen de tu estancia, verifica el total y sube tu
-          comprobante de pago para confirmar.
+          Revisa las fechas, el total y la referencia del comprobante.
         </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-5">
-        <section className="rounded-xl border border-sea/10 bg-foam lg:col-span-3">
-          <div className="overflow-hidden rounded-t-xl">
-            <div
-              className="h-48 bg-cover bg-center sm:h-56"
-              style={{ backgroundImage: `url(${habitacion.imageUrl})` }}
-              role="img"
-              aria-label={habitacion.name}
-            />
-          </div>
+        <section className="overflow-hidden rounded-xl border border-sea/10 bg-foam lg:col-span-3">
+          <div
+            className="h-56 bg-cover bg-center"
+            style={{ backgroundImage: `url(${habitacion.imageUrl})` }}
+            role="img"
+            aria-label={habitacion.name}
+          />
           <div className="space-y-6 p-5 sm:p-7">
             <div className="flex items-start gap-3">
-              <BedDouble
-                className="mt-1 h-6 w-6 shrink-0 text-coral"
-                aria-hidden
-              />
+              <BedDouble className="mt-1 h-6 w-6 shrink-0 text-coral" aria-hidden />
               <div>
                 <h2 className="font-[family-name:var(--font-display)] text-2xl text-sea">
                   Habitación {habitacion.name}
@@ -157,7 +139,6 @@ export default function ConfirmacionReserva({
                 value={checkIn}
                 onChange={(value) => actualizarFechas("in", value)}
                 icon={<CalendarCheck className="h-3.5 w-3.5" aria-hidden />}
-                placeholder="Fecha de llegada"
               />
               <DatePicker
                 label="Check-out"
@@ -165,28 +146,22 @@ export default function ConfirmacionReserva({
                 onChange={(value) => actualizarFechas("out", value)}
                 min={checkIn || undefined}
                 icon={<CalendarX2 className="h-3.5 w-3.5" aria-hidden />}
-                placeholder="Fecha de salida"
               />
             </div>
 
             <ul className="grid gap-3 text-sm sm:grid-cols-2">
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
-                <Moon className="h-4 w-4 shrink-0 text-coral" aria-hidden />
-                <span>
-                  {noches} noche{noches === 1 ? "" : "s"}
-                </span>
+                <Moon className="h-4 w-4 text-coral" aria-hidden />
+                {noches} noche{noches === 1 ? "" : "s"}
               </li>
               <li className="flex items-center gap-2.5 rounded-md border border-sea/10 bg-background px-3 py-2.5 text-sea">
-                <Users className="h-4 w-4 shrink-0 text-coral" aria-hidden />
-                <span>
-                  Hasta {habitacion.capacity} persona
-                  {habitacion.capacity === 1 ? "" : "s"}
-                </span>
+                <Users className="h-4 w-4 text-coral" aria-hidden />
+                Hasta {habitacion.capacity} personas
               </li>
             </ul>
 
             <div className="space-y-3 border-t border-sea/10 pt-5">
-              <h3 className="flex items-center gap-2 font-semibold tracking-wide text-sea">
+              <h3 className="flex items-center gap-2 font-semibold text-sea">
                 <Receipt className="h-5 w-5 text-coral" aria-hidden />
                 Desglose de precio
               </h3>
@@ -197,15 +172,12 @@ export default function ConfirmacionReserva({
                 </span>
                 <span>{formatearPrecio(total)}</span>
               </div>
-              <div className="flex items-baseline justify-between border-t border-dashed border-sea/15 pt-2">
+              <div className="flex justify-between border-t border-dashed border-sea/15 pt-2">
                 <span className="font-semibold text-sea">Total</span>
-                <span className="font-[family-name:var(--font-display)] text-3xl text-sea">
+                <span className="text-3xl font-semibold text-sea">
                   {formatearPrecio(total)}
                 </span>
               </div>
-              <p className="text-xs text-mist">
-                El total se recalcula automáticamente al cambiar las fechas.
-              </p>
             </div>
           </div>
         </section>
@@ -216,67 +188,34 @@ export default function ConfirmacionReserva({
             className="flex h-full flex-col gap-5 rounded-xl border border-sea/10 bg-foam p-5 sm:p-7"
           >
             <div>
-              <h2 className="mb-1 font-[family-name:var(--font-display)] text-2xl text-sea">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl text-sea">
                 Comprobante de pago
               </h2>
-              <p className="text-sm leading-relaxed text-mist">
-                Sube una captura o PDF de tu transferencia (simulación). Luego
-                confirma la reserva.
+              <p className="mt-1 text-sm text-mist">
+                El nombre del archivo se registra con la reserva para su validación.
               </p>
             </div>
 
-            <label
-              onDragOver={(e) => {
-                e.preventDefault();
-                if (!ocupado) setArrastrando(true);
-              }}
-              onDragLeave={() => setArrastrando(false)}
-              onDrop={onDrop}
-              className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-10 text-center transition ${
-                ocupado ? "pointer-events-none opacity-70" : ""
-              } ${
-                arrastrando
-                  ? "border-coral bg-coral/5"
-                  : archivo
-                    ? "border-sea/30 bg-background"
-                    : "border-sea/20 hover:border-coral/50 hover:bg-background"
-              }`}
-            >
+            <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-sea/20 px-4 py-10 text-center">
               <input
                 type="file"
                 accept="image/*,.pdf"
                 className="sr-only"
-                disabled={ocupado}
+                disabled={guardando}
                 onChange={onFileChange}
               />
-              {subiendo ? (
-                <>
-                  <Spinner className="h-10 w-10" label="Procesando archivo" />
-                  <span className="text-sm font-medium text-sea">
-                    Procesando comprobante…
-                  </span>
-                  <span className="text-xs text-mist">
-                    Validando archivo, un momento
-                  </span>
-                </>
-              ) : archivo ? (
+              {archivo ? (
                 <>
                   <FileImage className="h-10 w-10 text-sea" aria-hidden />
-                  <span className="break-all px-2 text-sm font-medium text-sea">
+                  <span className="break-all text-sm font-medium text-sea">
                     {archivo.name}
-                  </span>
-                  <span className="text-xs text-mist">
-                    Haz clic para cambiar el archivo
                   </span>
                 </>
               ) : (
                 <>
                   <Upload className="h-10 w-10 text-mist" aria-hidden />
                   <span className="text-sm font-medium text-sea">
-                    Arrastra tu comprobante aquí
-                  </span>
-                  <span className="text-xs text-mist">
-                    o haz clic para seleccionar (JPG, PNG o PDF)
+                    Seleccionar comprobante
                   </span>
                 </>
               )}
@@ -284,29 +223,39 @@ export default function ConfirmacionReserva({
 
             <button
               type="submit"
-              disabled={!archivo || ocupado}
-              className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-coral py-3 font-semibold tracking-wide text-white transition hover:bg-coral-hover disabled:cursor-not-allowed disabled:opacity-45"
+              disabled={!estaAutenticado || !archivo || guardando}
+              className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-coral py-3 font-semibold text-white disabled:opacity-45"
             >
-              {enviando ? (
+              {guardando ? (
                 <>
                   <Spinner className="h-4 w-4 text-white" />
-                  Confirmando reserva…
+                  Registrando…
                 </>
               ) : (
                 "Confirmar reserva"
               )}
             </button>
 
-            {confirmado ? (
-              <p className="flex items-start gap-2 rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
-                <CheckCircle2
-                  className="mt-0.5 h-5 w-5 shrink-0 text-coral"
-                  aria-hidden
-                />
+            {!estaAutenticado ? (
+              <p className="rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
+                <Link href="/login" className="font-semibold text-coral">
+                  Inicia sesión
+                </Link>{" "}
+                para registrar la reserva.
+              </p>
+            ) : null}
+
+            {error ? (
+              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">
+                {error}
+              </p>
+            ) : null}
+
+            {codigoReserva ? (
+              <p className="flex gap-2 rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-coral" aria-hidden />
                 <span>
-                  Reserva simulada con éxito. Tu comprobante{" "}
-                  <strong>{archivo?.name}</strong> quedó registrado de forma
-                  local (sin envío a servidor).
+                  Reserva registrada: <strong>{codigoReserva}</strong>.
                 </span>
               </p>
             ) : null}

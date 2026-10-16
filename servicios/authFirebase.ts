@@ -164,13 +164,10 @@ export const authFirebase: ServicioAuth = {
     usuarioId: string,
     cambios: Partial<Usuario>,
   ): Promise<Usuario> {
-    const {
-      id: _id,
-      email: _email,
-      rol: _rol,
-      creadoEn: _creadoEn,
-      ...permitidos
-    } = cambios;
+    const permitidos: Record<string, unknown> = {};
+    if (cambios.nombre !== undefined) permitidos.nombre = cambios.nombre;
+    if (cambios.apellido !== undefined) permitidos.apellido = cambios.apellido;
+    if (cambios.telefono !== undefined) permitidos.telefono = cambios.telefono;
 
     const ref = doc(obtenerDb(), COLECCION_USUARIOS, usuarioId);
     await updateDoc(ref, { ...permitidos, actualizadoEn: serverTimestamp() });

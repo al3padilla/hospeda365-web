@@ -30,25 +30,12 @@ export default function DatePicker({
   placeholder = "Selecciona una fecha",
 }: DatePickerProps) {
   const [open, setOpen] = useState(false);
-  const [ready, setReady] = useState(false);
   const selected = parseIso(value);
   const minDate = parseIso(min ?? "");
   const [view, setView] = useState<Date>(() => {
     return parseIso(value) ?? parseIso(min ?? "") ?? new Date(2026, 8, 1);
   });
   const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setReady(true);
-    setView(parseIso(value) ?? parseIso(min ?? "") ?? new Date());
-    // Solo al montar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const s = parseIso(value);
-    if (s) setView(s);
-  }, [value]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,7 +59,7 @@ export default function DatePicker({
   const month = view.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = ready ? startOfDay(new Date()) : null;
+  const today = startOfDay(new Date());
 
   const cells: Array<Date | null> = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -102,7 +89,10 @@ export default function DatePicker({
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (!open) setView(selected ?? minDate ?? new Date());
+          setOpen((current) => !current);
+        }}
         aria-haspopup="dialog"
         aria-expanded={open}
         className="flex w-full items-center justify-between gap-2 rounded-md border border-sea/15 bg-white px-3 py-2.5 text-left text-sea transition hover:border-sea/30 focus:outline-none focus:ring-2 focus:ring-coral/50"
@@ -157,7 +147,7 @@ export default function DatePicker({
 
               const disabled = isDisabled(date);
               const isSelected = selected ? sameDay(date, selected) : false;
-              const isToday = today ? sameDay(date, today) : false;
+              const isToday = sameDay(date, today);
 
               return (
                 <button
@@ -193,7 +183,7 @@ export default function DatePicker({
             <button
               type="button"
               onClick={() => {
-                if (today && !isDisabled(today)) {
+                if (!isDisabled(today)) {
                   onChange(toIsoLocal(today));
                   setView(today);
                   setOpen(false);

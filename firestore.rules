@@ -1,7 +1,5 @@
 rules_version = '2';
 
-// Desplegar con: firebase deploy --only firestore:rules
-
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -13,7 +11,6 @@ service cloud.firestore {
       return autenticado() && request.auth.uid == userId;
     }
 
-    // Cada get() cuenta como una lectura facturable.
     function perfil() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -39,35 +36,35 @@ service cloud.firestore {
                 .hasAny(campos.toSet());
     }
 
+    function soloModifica(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(campos.toSet());
+    }
+
     match /users/{userId} {
 
       allow read: if esDueno(userId) || esPersonal();
 
-      // Solo el propio perfil y siempre como 'huesped': impide auto-asignarse admin.
       allow create: if esDueno(userId)
                     && request.resource.data.rol == 'huesped'
                     && request.resource.data.activo == true
-                    // La app guarda el correo en minúsculas; el token puede no venir así.
                     && request.resource.data.email == request.auth.token.email.lower()
                     && request.resource.data.keys().hasAll([
                          'email', 'nombre', 'apellido', 'rol', 'activo'
                        ]);
 
-      // Rol, email y activo solo los cambia un admin.
       allow update: if (esDueno(userId) && noModifica(['rol', 'email', 'activo']))
                     || esAdmin();
 
-      // Borrado lógico con activo=false.
       allow delete: if false;
     }
 
     match /rooms/{roomId} {
 
-      allow read: if autenticado();
+      allow read: if resource.data.activa == true || esPersonal();
 
       allow create, delete: if esAdmin() && activo();
 
-      // Recepción solo cambia el estado; precios y catálogo, solo admin.
       allow update: if activo() && (
                       esAdmin()
                       || (rol() == 'recepcionista'
@@ -76,7 +73,6 @@ service cloud.firestore {
                     && request.resource.data.estado in
                        ['disponible', 'ocupada', 'limpieza', 'mantenimiento'];
 
-      // Bitácora de auditoría: solo se agrega.
       match /historial/{eventoId} {
         allow read:   if esPersonal();
         allow create: if esPersonal() && activo();
@@ -90,23 +86,27 @@ service cloud.firestore {
                   || (autenticado() && resource.data.usuarioId == request.auth.uid);
 
       allow create: if activo()
-                    && request.resource.data.usuarioId == request.auth.uid
-                    && request.resource.data.estado == 'pendiente'
-                    && request.resource.data.estadoPago in ['sin_comprobante', 'en_revision']
+                    && (
+                      (request.resource.data.usuarioId == request.auth.uid
+                       && request.resource.data.estado == 'pendiente'
+                       && request.resource.data.estadoPago in ['sin_comprobante', 'en_revision'])
+                      || (esPersonal()
+                          && request.resource.data.estado in
+                             ['pendiente', 'confirmada', 'en_curso', 'finalizada', 'cancelada', 'rechazada']
+                          && request.resource.data.estadoPago in
+                             ['sin_comprobante', 'en_revision', 'aprobado', 'rechazado'])
+                    )
                     && request.resource.data.fechaEntrada < request.resource.data.fechaSalida
                     && request.resource.data.numeroHuespedes > 0
                     && request.resource.data.total >= 0;
 
-      // El huésped solo puede cancelar o adjuntar comprobante.
       allow update: if activo() && (
                       esPersonal()
                       || (resource.data.usuarioId == request.auth.uid
-                          && noModifica(['usuarioId', 'total', 'noches',
-                                         'habitacionId', 'estadoPago'])
-                          && request.resource.data.estado in ['pendiente', 'cancelada'])
+                          && soloModifica(['estado', 'actualizadaEn'])
+                          && request.resource.data.estado == 'cancelada')
                     );
 
-      // Se cancelan, no se borran: el dashboard calcula ingresos sobre el histórico.
       allow delete: if false;
     }
 
@@ -120,7 +120,6 @@ service cloud.firestore {
                     && request.resource.data.estado == 'en_revision'
                     && request.resource.data.monto > 0;
 
-      // Crítico: solo el personal aprueba o rechaza pagos.
       allow update: if esPersonal() && activo()
                     && request.resource.data.estado in ['aprobado', 'rechazado', 'en_revision'];
 
@@ -131,7 +130,6 @@ service cloud.firestore {
 
       allow read: if esPersonal();
 
-      // Solo Cloud Functions (Admin SDK) escribe métricas.
       allow write: if false;
     }
 

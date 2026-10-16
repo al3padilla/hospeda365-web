@@ -2,7 +2,6 @@ import { Suspense } from "react";
 import PageShell from "../../components/PageShell";
 import ConfirmacionReserva from "../../components/ConfirmacionReserva";
 import { PageLoader } from "../../components/Loader";
-import { esperar } from "../../datos/carga";
 
 type PageProps = {
   searchParams: Promise<{
@@ -13,7 +12,7 @@ type PageProps = {
 };
 
 async function ConfirmacionContent({ searchParams }: PageProps) {
-  const [params] = await Promise.all([searchParams, esperar()]);
+  const params = await searchParams;
 
   return (
     <ConfirmacionReserva

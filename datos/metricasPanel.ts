@@ -87,6 +87,7 @@ const MAPA_ESTADO: Record<HabitacionAdmin["status"], EstadoHabitacion> = {
   AVAILABLE: "disponible",
   OCCUPIED: "ocupada",
   CLEANING: "limpieza",
+  MAINTENANCE: "mantenimiento",
 };
 
 export function resumirPanel(

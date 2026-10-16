@@ -3,6 +3,7 @@
 import { HabitacionesProvider } from "../contexto/HabitacionesContext";
 import { AuthProvider } from "../contexto/AuthContext";
 import { AdminProvider } from "../contexto/AdminContext";
+import { ReservasProvider } from "../contexto/ReservasContext";
 
 export default function Proveedores({
   children,
@@ -11,7 +12,11 @@ export default function Proveedores({
 }) {
   return (
     <AuthProvider>
-      <HabitacionesProvider><AdminProvider>{children}</AdminProvider></HabitacionesProvider>
+      <HabitacionesProvider>
+        <ReservasProvider>
+          <AdminProvider>{children}</AdminProvider>
+        </ReservasProvider>
+      </HabitacionesProvider>
     </AuthProvider>
   );
 }

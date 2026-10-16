@@ -1,9 +1,6 @@
 {
-  "//": "Desplegar con: firebase deploy --only firestore:indexes",
-
   "indexes": [
     {
-      "//": "Panel CRUD: reservas por estado, más recientes primero.",
       "collectionGroup": "reservations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -12,7 +9,6 @@
       ]
     },
     {
-      "//": "Mis reservas: las del huésped autenticado, por fecha de entrada.",
       "collectionGroup": "reservations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -21,7 +17,6 @@
       ]
     },
     {
-      "//": "Comprobantes pendientes de validar (bandeja de Recepción).",
       "collectionGroup": "reservations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -30,7 +25,6 @@
       ]
     },
     {
-      "//": "Disponibilidad: reservas activas que se solapan con un rango.",
       "collectionGroup": "reservations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -40,7 +34,6 @@
       ]
     },
     {
-      "//": "Dashboard: ingresos del mes sobre reservas finalizadas.",
       "collectionGroup": "reservations",
       "queryScope": "COLLECTION",
       "fields": [
@@ -50,7 +43,6 @@
       ]
     },
     {
-      "//": "Catálogo: habitaciones activas disponibles, ordenadas por precio.",
       "collectionGroup": "rooms",
       "queryScope": "COLLECTION",
       "fields": [
@@ -60,7 +52,6 @@
       ]
     },
     {
-      "//": "Tablero de habitaciones agrupado por piso.",
       "collectionGroup": "rooms",
       "queryScope": "COLLECTION",
       "fields": [
@@ -69,7 +60,6 @@
       ]
     },
     {
-      "//": "Bandeja de pagos por estado.",
       "collectionGroup": "payments",
       "queryScope": "COLLECTION",
       "fields": [
@@ -78,7 +68,6 @@
       ]
     },
     {
-      "//": "Gestión de usuarios: por rol y fecha de registro.",
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
