@@ -1,12 +1,32 @@
 # Hospeda365 Web
 
-Aplicación web de gestión hotelera desarrollada con Next.js, React, TypeScript, Tailwind CSS y Firebase.
+Plataforma web de **Hotel Terra Azul** impulsada por Hospeda365.  
+Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, y al personal operar el panel administrativo.
+
+**Producción:** [https://hospeda365-web.vercel.app/](https://hospeda365-web.vercel.app/)
+
+---
+
+## Stack
+
+| Tecnología | Uso |
+| --- | --- |
+| **Next.js 16** | App Router y SSR |
+| **React 19** | Interfaz |
+| **TypeScript** | Tipado estático |
+| **Tailwind CSS 4** | Estilos |
+| **Firebase** | Auth + Cloud Firestore |
+| **Lucide React** | Iconografía |
+
+---
 
 ## Requisitos
 
-- Node.js 20 o superior
-- Proyecto Firebase con Authentication y Cloud Firestore habilitados
-- Cuenta administradora registrada en `users/{uid}` con `rol: "admin"`
+- Node.js **20+**
+- Proyecto Firebase con **Authentication** (Email/Password) y **Cloud Firestore**
+- Cuenta administradora en Firestore: `users/{uid}` con `rol: "admin"`
+
+---
 
 ## Configuración
 
@@ -15,9 +35,7 @@ npm ci
 npm run dev
 ```
 
-Crear `.env.local` con las variables del proyecto Firebase. El archivo está excluido de Git.
-
-Variables requeridas:
+Crea un archivo `.env.local` (excluido de Git) con las variables del proyecto Firebase:
 
 ```dotenv
 NEXT_PUBLIC_FIREBASE_API_KEY=
@@ -27,6 +45,14 @@ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=
 NEXT_PUBLIC_FIREBASE_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
 ```
+
+Los valores se obtienen en **Firebase Console → Project settings → Your apps**.
+
+> Sin estas variables, la autenticación no estará disponible.
+
+Abre [http://localhost:3000](http://localhost:3000) en desarrollo.
+
+---
 
 ## Comandos
 
@@ -38,22 +64,26 @@ NEXT_PUBLIC_FIREBASE_APP_ID=
 | `npm run start` | Servidor de producción |
 | `npm run seed:firestore` | Migración idempotente de datos iniciales |
 
+---
+
 ## Migración inicial
 
 La migración carga seis habitaciones y nueve reservas desde `scripts/firestore.seed.json`.
 
-Agregar temporalmente las siguientes variables a `.env.local`:
+Agrega temporalmente las siguientes variables a `.env.local`:
 
 ```dotenv
 FIREBASE_SEED_EMAIL=
 FIREBASE_SEED_PASSWORD=
 ```
 
-La cuenta debe tener rol `admin` en Firestore. Ejecutar:
+La cuenta debe tener rol `admin` en Firestore. Ejecuta:
 
 ```bash
 npm run seed:firestore
 ```
+
+---
 
 ## Estructura
 
@@ -66,6 +96,8 @@ npm run seed:firestore
 | `datos/` | Tipos y utilidades puras |
 | `scripts/` | Datos y script de migración |
 | `docs/` | Especificación técnica |
+
+---
 
 ## Firebase
 
