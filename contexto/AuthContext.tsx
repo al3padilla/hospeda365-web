@@ -37,7 +37,7 @@ type AuthContextValue = {
   nombreCompleto: string;
   iniciales: string;
 
-  // Devuelven `true` si salió bien, para que la página navegue.
+  /** Resultado de autenticación para control de navegación. */
   login: (credenciales: Credenciales) => Promise<boolean>;
   registrar: (datos: DatosRegistro) => Promise<boolean>;
   logout: () => Promise<void>;

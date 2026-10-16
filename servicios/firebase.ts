@@ -11,7 +11,6 @@ const config = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-/** Sin `.env.local` completo, la app sigue funcionando con datos mock. */
 export const firebaseConfigurado: boolean = Object.values(config).every(
   (v) => typeof v === "string" && v.length > 0,
 );
@@ -21,14 +20,12 @@ let app: FirebaseApp | null = null;
 function iniciar(): FirebaseApp {
   if (!firebaseConfigurado) {
     throw new Error(
-      "Firebase no está configurado. Copia .env.local.example a .env.local " +
-        "y completa las credenciales del proyecto.",
+      "Configuración de Firebase incompleta.",
     );
   }
 
   if (app) return app;
 
-  // Evita "Firebase App named '[DEFAULT]' already exists" con Fast Refresh.
   app = getApps().length
     ? getApp()
     : initializeApp(config as Record<keyof typeof config, string>);
@@ -36,7 +33,6 @@ function iniciar(): FirebaseApp {
   return app;
 }
 
-// Inicialización perezosa: Next también importa los módulos en el servidor.
 export function obtenerAuth(): Auth {
   return getAuth(iniciar());
 }

@@ -4,21 +4,18 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
-import {
-  HABITACIONES_DESTACADAS,
-  type Habitacion,
-} from "../datos/habitaciones";
-import { DELAYS } from "../datos/carga";
-import { useDelayedAction } from "../hooks/useDelayedAction";
+
+import { escucharHabitaciones } from "../servicios/hotelFirestore";
+import type { Habitacion } from "../servicios/tiposHotel";
 
 export type CriteriosBusqueda = {
   checkIn: string;
   checkOut: string;
-  /** Total que exige capacidad (adultos + niños). */
   personas: number;
   adultos: number;
   ninos: number;
@@ -30,65 +27,76 @@ type HabitacionesContextValue = {
   habitacionesFiltradas: Habitacion[];
   busqueda: CriteriosBusqueda | null;
   cargando: boolean;
-  setHabitaciones: (habitaciones: Habitacion[]) => void;
+  error: string | null;
   buscar: (criterios: CriteriosBusqueda) => void;
   limpiarBusqueda: () => void;
+  obtenerPorId: (id?: string | null) => Habitacion | undefined;
 };
 
-const HabitacionesContext = createContext<HabitacionesContextValue | null>(
-  null,
-);
+const HabitacionesContext = createContext<HabitacionesContextValue | null>(null);
 
 export function HabitacionesProvider({ children }: { children: ReactNode }) {
-  const [habitaciones, setHabitaciones] = useState<Habitacion[]>(
-    HABITACIONES_DESTACADAS,
-  );
+  const [habitaciones, setHabitaciones] = useState<Habitacion[]>([]);
   const [busqueda, setBusqueda] = useState<CriteriosBusqueda | null>(null);
-  const [cargando, setCargando] = useState(false);
-  const { runAfter, cancel } = useDelayedAction();
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() =>
+    escucharHabitaciones(
+      (datos) => {
+        setHabitaciones(datos);
+        setError(null);
+        setCargando(false);
+      },
+      () => {
+        setError("No se pudo cargar el catálogo de habitaciones.");
+        setCargando(false);
+      },
+    ), []);
 
   const habitacionesFiltradas = useMemo(
     () =>
       busqueda
-        ? habitaciones.filter((h) => h.capacity >= busqueda.personas)
+        ? habitaciones.filter(
+            (habitacion) =>
+              habitacion.capacity >= busqueda.personas &&
+              habitacion.status === "AVAILABLE",
+          )
         : habitaciones,
     [habitaciones, busqueda],
   );
 
-  const buscar = useCallback(
-    (criterios: CriteriosBusqueda) => {
-      setCargando(true);
-      runAfter(DELAYS.busqueda, () => {
-        setBusqueda(criterios);
-        setCargando(false);
-      });
-    },
-    [runAfter],
+  const buscar = useCallback((criterios: CriteriosBusqueda) => {
+    setBusqueda(criterios);
+  }, []);
+
+  const limpiarBusqueda = useCallback(() => setBusqueda(null), []);
+
+  const obtenerPorId = useCallback(
+    (id?: string | null) => habitaciones.find((habitacion) => habitacion.id === id),
+    [habitaciones],
   );
 
-  const limpiarBusqueda = useCallback(() => {
-    cancel();
-    setCargando(false);
-    setBusqueda(null);
-  }, [cancel]);
-
-  const value = useMemo(
+  const value = useMemo<HabitacionesContextValue>(
     () => ({
       habitaciones,
       habitacionesFiltradas,
       busqueda,
       cargando,
-      setHabitaciones,
+      error,
       buscar,
       limpiarBusqueda,
+      obtenerPorId,
     }),
     [
       habitaciones,
       habitacionesFiltradas,
       busqueda,
       cargando,
+      error,
       buscar,
       limpiarBusqueda,
+      obtenerPorId,
     ],
   );
 
@@ -99,12 +107,8 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useHabitaciones() {
-  const ctx = useContext(HabitacionesContext);
-  if (!ctx) {
-    throw new Error(
-      "useHabitaciones debe usarse dentro de HabitacionesProvider",
-    );
-  }
-  return ctx;
+export function useHabitaciones(): HabitacionesContextValue {
+  const context = useContext(HabitacionesContext);
+  if (!context) throw new Error("HabitacionesProvider no está disponible.");
+  return context;
 }

@@ -53,7 +53,7 @@ export const MENSAJES_ERROR: Record<CodigoErrorAuth, string> = {
   error_desconocido: "Ocurrió un error inesperado. Intenta de nuevo.",
 };
 
-/** Contrato común de `authMock` y `authFirebase`. */
+/** Contrato del servicio de autenticación. */
 export type ServicioAuth = {
   /** Lanza `ErrorAuth` si las credenciales no son válidas. */
   login(credenciales: Credenciales): Promise<Sesion>;

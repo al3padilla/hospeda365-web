@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { IMAGENES_INICIO, INTERVALO_CARRUSEL_MS } from "../datos/inicio";
 
 export default function HeroCarousel() {
@@ -16,16 +17,19 @@ export default function HeroCarousel() {
     }, INTERVALO_CARRUSEL_MS);
 
     return () => window.clearInterval(id);
-  }, [index, total, tieneImagenes]);
+  }, [total, tieneImagenes]);
 
   return (
     <section className="relative min-h-[88vh] flex items-end sm:items-center overflow-hidden bg-sea-deep">
       {tieneImagenes
         ? IMAGENES_INICIO.map((src, i) => (
-            <img
+            <Image
               key={src}
               src={src}
               alt=""
+              fill
+              sizes="100vw"
+              priority={i === 0}
               aria-hidden={i !== index}
               className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out ${
                 i === index ? "z-[1] opacity-100" : "z-0 opacity-0"

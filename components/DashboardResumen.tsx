@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   BedDouble,
   CalendarClock,
@@ -10,79 +10,56 @@ import {
   Wallet,
 } from "lucide-react";
 
+import { useAdmin } from "../contexto/AdminContext";
 import { useAuth } from "../contexto/AuthContext";
 import {
   formatearDinero,
   formatearDineroCompacto,
   variacion,
-  type Metricas,
 } from "../datos/metricas";
-import { servicioMetricas } from "../servicios";
+import { periodoActual, resumirPanel } from "../datos/metricasPanel";
+import EstadoHabitaciones from "./EstadoHabitaciones";
+import GraficaIngresos from "./GraficaIngresos";
 import { PageLoader } from "./Loader";
 import TarjetaMetrica from "./TarjetaMetrica";
-import GraficaIngresos from "./GraficaIngresos";
-import EstadoHabitaciones from "./EstadoHabitaciones";
-
-const ETIQUETA_ESTADO_RESERVA: Record<string, string> = {
-  confirmada: "Confirmadas",
-  pendiente: "Pendientes",
-  cancelada: "Canceladas",
-};
 
 export default function DashboardResumen() {
   const { esPersonal, estaAutenticado, state, nombreCompleto } = useAuth();
-
-  const [metricas, setMetricas] = useState<Metricas | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const { reservations, rooms, loading, error } = useAdmin();
   const [verTabla, setVerTabla] = useState(false);
-
-  useEffect(() => {
-    let cancelado = false;
-
-    void (async () => {
-      try {
-        const datos = await servicioMetricas.obtenerResumen();
-        if (!cancelado) setMetricas(datos);
-      } finally {
-        if (!cancelado) setCargando(false);
-      }
-    })();
-
-    return () => {
-      cancelado = true;
-    };
-  }, []);
+  const metricas = useMemo(
+    () => resumirPanel(reservations, rooms),
+    [reservations, rooms],
+  );
+  const periodo = periodoActual();
+  const indiceActual = metricas.ingresosPorMes.findIndex(
+    (item) => item.periodo === periodo,
+  );
+  const ingresosMes =
+    indiceActual >= 0 ? metricas.ingresosPorMes[indiceActual].ingresos : 0;
+  const ingresosMesAnterior =
+    indiceActual > 0 ? metricas.ingresosPorMes[indiceActual - 1].ingresos : 0;
 
   if (state.estado === "inicializando") {
-    return <PageLoader titulo="Verificando tu sesión…" />;
+    return <PageLoader titulo="Verificando sesión…" />;
   }
 
   if (!estaAutenticado) {
-    return (
-      <Aviso
-        titulo="Necesitas iniciar sesión"
-        texto="Este panel es solo para el personal del hotel."
-      />
-    );
+    return <Aviso titulo="Inicio de sesión requerido" texto="Panel restringido al personal." />;
   }
 
   if (!esPersonal) {
     return (
       <Aviso
-        titulo="No tienes acceso a este panel"
-        texto={`${nombreCompleto}, tu cuenta es de huésped. El dashboard administrativo es para recepción y administración.`}
+        titulo="Acceso denegado"
+        texto={`${nombreCompleto}, esta cuenta no tiene permisos administrativos.`}
       />
     );
   }
 
-  if (cargando || !metricas) {
-    return <PageLoader titulo="Calculando métricas…" subtitulo="Un momento" />;
-  }
+  if (loading) return <PageLoader titulo="Sincronizando métricas…" />;
 
-  const deltaIngresos = variacion(
-    metricas.ingresosMes,
-    metricas.ingresosMesAnterior,
-  );
+  if (error) return <Aviso titulo="Error de sincronización" texto={error} />;
 
   return (
     <section className="container mx-auto max-w-6xl px-4 py-10 sm:py-12">
@@ -93,9 +70,7 @@ export default function DashboardResumen() {
         <h1 className="mt-1 font-[family-name:var(--font-display)] text-3xl text-sea sm:text-4xl">
           Resumen del hotel
         </h1>
-        <p className="mt-1.5 text-sm text-mist">
-          Septiembre 2026 · datos de demostración
-        </p>
+        <p className="mt-1.5 text-sm text-mist">Periodo {periodo}</p>
       </header>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -108,11 +83,10 @@ export default function DashboardResumen() {
         />
         <TarjetaMetrica
           etiqueta="Ganancias del mes"
-          valor={formatearDineroCompacto(metricas.ingresosMes)}
+          valor={formatearDineroCompacto(ingresosMes)}
           icono={Wallet}
-          delta={deltaIngresos}
-          deltaPeriodo="agosto"
-          detalle={formatearDinero(metricas.ingresosMes)}
+          delta={variacion(ingresosMes, ingresosMesAnterior)}
+          detalle={formatearDinero(ingresosMes)}
         />
         <TarjetaMetrica
           etiqueta="Reservas pendientes"
@@ -126,25 +100,21 @@ export default function DashboardResumen() {
           valor={String(metricas.comprobantesPorValidar)}
           icono={FileCheck2}
           subirEsBueno={false}
-          detalle="En la bandeja de recepción"
+          detalle="En revisión"
         />
       </div>
 
       <div className="mt-6 rounded-xl border border-sea/10 bg-foam p-5 sm:p-6">
-        <GraficaIngresos
-          datos={metricas.historico}
-          periodoActual={metricas.periodo}
-        />
-
+        <GraficaIngresos datos={metricas.ingresosPorMes} periodoActual={periodo} />
         <div className="mt-5 border-t border-sea/10 pt-4">
           <button
             type="button"
-            onClick={() => setVerTabla((v) => !v)}
+            onClick={() => setVerTabla((value) => !value)}
             aria-expanded={verTabla}
-            className="inline-flex items-center gap-2 text-sm font-medium text-sea transition hover:text-coral"
+            className="inline-flex items-center gap-2 text-sm font-medium text-sea"
           >
             <Table2 className="h-4 w-4" aria-hidden />
-            {verTabla ? "Ocultar tabla de datos" : "Ver tabla de datos"}
+            {verTabla ? "Ocultar tabla" : "Ver tabla"}
           </button>
 
           {verTabla ? (
@@ -152,19 +122,17 @@ export default function DashboardResumen() {
               <table className="w-full min-w-[320px] border-collapse text-sm">
                 <thead>
                   <tr className="border-b border-sea/10 text-left">
-                    <th className="py-2 pr-4 font-medium text-mist">Mes</th>
-                    <th className="py-2 pr-4 font-medium text-mist">Ingresos</th>
-                    <th className="py-2 font-medium text-mist">Reservas</th>
+                    <th className="py-2 pr-4">Mes</th>
+                    <th className="py-2 pr-4">Ingresos</th>
+                    <th className="py-2">Reservas</th>
                   </tr>
                 </thead>
-                <tbody style={{ fontVariantNumeric: "tabular-nums" }}>
-                  {metricas.historico.map((m) => (
-                    <tr key={m.periodo} className="border-b border-sea/5">
-                      <td className="py-2 pr-4 text-sea">{m.etiqueta}</td>
-                      <td className="py-2 pr-4 text-sea">
-                        {formatearDinero(m.ingresos)}
-                      </td>
-                      <td className="py-2 text-mist">{m.reservas}</td>
+                <tbody>
+                  {metricas.ingresosPorMes.map((item) => (
+                    <tr key={item.periodo} className="border-b border-sea/5">
+                      <td className="py-2 pr-4">{item.etiqueta}</td>
+                      <td className="py-2 pr-4">{formatearDinero(item.ingresos)}</td>
+                      <td className="py-2">{item.reservas}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -181,40 +149,26 @@ export default function DashboardResumen() {
             total={metricas.habitacionesTotales}
           />
         </div>
-
         <div className="rounded-xl border border-sea/10 bg-foam p-5 sm:p-6">
           <h3 className="font-[family-name:var(--font-display)] text-xl text-sea">
-            Reservas del mes
+            Reservas por estado
           </h3>
-          <p className="mt-0.5 text-sm text-mist">Por estado.</p>
-
-          <ul className="mt-4 list-none space-y-3 p-0">
-            {metricas.reservasPorEstado.map((r) => (
+          <ul className="mt-4 space-y-3">
+            {metricas.reservasPorEstado.map((item) => (
               <li
-                key={r.estado}
-                className="flex items-center justify-between gap-3 border-b border-sea/5 pb-3 last:border-0 last:pb-0"
+                key={item.etiqueta}
+                className="flex items-center justify-between border-b border-sea/5 pb-3"
               >
                 <span className="flex items-center gap-2 text-sm text-sea">
                   <BedDouble className="h-4 w-4 text-mist" aria-hidden />
-                  {ETIQUETA_ESTADO_RESERVA[r.estado] ?? r.estado}
+                  {item.etiqueta}
                 </span>
-                <span
-                  className="text-lg font-semibold text-sea"
-                  style={{ fontVariantNumeric: "tabular-nums" }}
-                >
-                  {r.cantidad}
-                </span>
+                <strong>{item.cantidad}</strong>
               </li>
             ))}
           </ul>
         </div>
       </div>
-
-      <p className="mt-6 text-center text-xs text-mist">
-        Las cifras son datos de demostración. Cuando exista Firestore saldrán del
-        documento <code className="font-mono">metricas/2026-09</code>, ya
-        precalculado, con una sola lectura.
-      </p>
     </section>
   );
 }
