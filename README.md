@@ -106,3 +106,12 @@ firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 La definición de colecciones, permisos e índices está documentada en [docs/firebase-firestore.md](docs/firebase-firestore.md).
+
+
+## 📄 Licencia
+
+Este proyecto está protegido bajo la licencia **Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)**.
+
+[![Licencia Creative Commons](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/deed.es)
+
+Consulta el archivo [LICENSE](./LICENSE) para más detalles sobre los términos de uso.
