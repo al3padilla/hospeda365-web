@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { Eye } from "lucide-react";
 import { urlConfirmacion } from "../datos/reserva";
+import { useAuth } from "../contexto/AuthContext";
 import { useBloqueoModal } from "../hooks/useBloqueoModal";
 import HabitacionModal from "./HabitacionModal";
 import FotoLightbox from "./FotoLightbox";
@@ -33,12 +35,16 @@ export default function RoomCard({
 }: RoomCardProps) {
   const [detalleAbierto, setDetalleAbierto] = useState(false);
   const [fotoAmpliada, setFotoAmpliada] = useState(false);
+  const { estaAutenticado, estaCargando } = useAuth();
 
   const reservarHref = urlConfirmacion({
     habitacionId: id,
     checkIn,
     checkOut,
   });
+  const destinoReserva = estaAutenticado
+    ? reservarHref
+    : `/login?redirect=${encodeURIComponent(reservarHref)}`;
 
   const cerrarTodo = useCallback(() => {
     setFotoAmpliada(false);
@@ -101,12 +107,14 @@ export default function RoomCard({
               <Eye className="h-4 w-4 text-coral" aria-hidden />
               Ver más
             </button>
-            <a
-              href={reservarHref}
-              className="inline-flex items-center justify-center rounded-md bg-sea px-4 py-2.5 font-semibold tracking-wide text-white transition hover:bg-sea-deep"
+            <Link
+              href={destinoReserva}
+              aria-disabled={estaCargando}
+              onClick={(event) => estaCargando && event.preventDefault()}
+              className="inline-flex items-center justify-center rounded-md bg-sea px-4 py-2.5 font-semibold tracking-wide text-white transition hover:bg-sea-deep aria-disabled:cursor-wait aria-disabled:opacity-60"
             >
               Reservar
-            </a>
+            </Link>
           </div>
         </div>
       </article>
@@ -122,7 +130,7 @@ export default function RoomCard({
             imageUrl,
             highlights,
           }}
-          reservarHref={reservarHref}
+          reservarHref={destinoReserva}
           onClose={cerrarTodo}
           onAmpliarFoto={() => setFotoAmpliada(true)}
         />

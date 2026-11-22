@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
   BedDouble,
   CalendarCheck,
@@ -20,6 +21,7 @@ import {
   calcularTotal,
   fechasPorDefecto,
   formatearPrecio,
+  urlConfirmacion,
 } from "../datos/reserva";
 import DatePicker from "./DatePicker";
 import { Spinner } from "./Loader";
@@ -37,7 +39,8 @@ export default function ConfirmacionReserva({
   checkOutInicial,
 }: ConfirmacionReservaProps) {
   const { obtenerPorId, cargando: cargandoHabitaciones } = useHabitaciones();
-  const { estaAutenticado } = useAuth();
+  const { estaAutenticado, estaCargando } = useAuth();
+  const router = useRouter();
   const { crearReserva, guardando, error } = useReservas();
   const habitacion = obtenerPorId(habitacionId);
   const [checkIn, setCheckIn] = useState(
@@ -50,6 +53,18 @@ export default function ConfirmacionReserva({
 
   const noches = calcularNoches(checkIn, checkOut);
   const total = habitacion ? calcularTotal(habitacion.pricePerNight, noches) : 0;
+  const rutaConfirmacion = urlConfirmacion({
+    habitacionId: habitacionId ?? undefined,
+    checkIn: checkInInicial ?? undefined,
+    checkOut: checkOutInicial ?? undefined,
+  });
+  const rutaLogin = `/login?redirect=${encodeURIComponent(rutaConfirmacion)}`;
+
+  useEffect(() => {
+    if (!estaCargando && !estaAutenticado) {
+      router.replace(rutaLogin);
+    }
+  }, [estaAutenticado, estaCargando, router, rutaLogin]);
 
   function actualizarFechas(campo: "in" | "out", value: string) {
     if (campo === "in") {
@@ -83,7 +98,7 @@ export default function ConfirmacionReserva({
     setCodigoReserva(id);
   }
 
-  if (cargandoHabitaciones) {
+  if (estaCargando || !estaAutenticado || cargandoHabitaciones) {
     return <div className="py-20 text-center text-mist">Cargando habitación…</div>;
   }
 
@@ -206,15 +221,6 @@ export default function ConfirmacionReserva({
                 "Solicitar reserva"
               )}
             </button>
-
-            {!estaAutenticado ? (
-              <p className="rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
-                <Link href="/login" className="font-semibold text-coral">
-                  Inicia sesión
-                </Link>{" "}
-                para registrar la reserva.
-              </p>
-            ) : null}
 
             {error ? (
               <p className="rounded-md border border-red-200 bg-red-50 px-3 py-3 text-sm text-red-700">

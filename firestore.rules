@@ -41,6 +41,32 @@ service cloud.firestore {
                 .hasOnly(campos.toSet());
     }
 
+    function habitacionValida(data) {
+      return data.keys().hasAll([
+               'numero', 'piso', 'nombre', 'tipo', 'estado', 'capacidad',
+               'precioNoche', 'descripcion', 'amenidades', 'imagenes', 'activa'
+             ])
+             && data.numero is string
+             && data.numero.size() > 0
+             && data.piso is int
+             && data.piso >= 0
+             && data.nombre is string
+             && data.nombre.size() > 0
+             && data.tipo is string
+             && data.tipo.size() > 0
+             && data.estado in
+                ['disponible', 'ocupada', 'limpieza', 'mantenimiento']
+             && data.capacidad is int
+             && data.capacidad > 0
+             && data.precioNoche is number
+             && data.precioNoche > 0
+             && data.descripcion is string
+             && data.amenidades is list
+             && data.imagenes is list
+             && data.imagenes.size() > 0
+             && data.activa is bool;
+    }
+
     match /users/{userId} {
 
       allow read: if esDueno(userId) || esPersonal();
@@ -63,15 +89,18 @@ service cloud.firestore {
 
       allow read: if resource.data.activa == true || esPersonal();
 
-      allow create, delete: if esAdmin() && activo();
+      allow create: if esAdmin() && activo()
+                    && habitacionValida(request.resource.data);
 
-      allow update: if activo() && (
+      allow delete: if esAdmin() && activo();
+
+      allow update: if activo()
+                    && habitacionValida(request.resource.data)
+                    && (
                       esAdmin()
                       || (rol() == 'recepcionista'
-                          && noModifica(['precioNoche', 'tipo', 'capacidad', 'numero']))
-                    )
-                    && request.resource.data.estado in
-                       ['disponible', 'ocupada', 'limpieza', 'mantenimiento'];
+                          && soloModifica(['estado', 'actualizadaEn']))
+                    );
 
       match /historial/{eventoId} {
         allow read:   if esPersonal();
