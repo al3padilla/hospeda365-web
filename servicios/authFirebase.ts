@@ -1,6 +1,8 @@
 import {
   createUserWithEmailAndPassword,
+  FacebookAuthProvider,
   onAuthStateChanged,
+  signInWithPopup,
   signInWithEmailAndPassword,
   signOut,
   updateProfile as actualizarPerfilAuth,
@@ -39,6 +41,15 @@ function traducirError(codigoFirebase: string): CodigoErrorAuth {
       return "usuario_no_encontrado";
     case "auth/email-already-in-use":
       return "email_ya_registrado";
+    case "auth/account-exists-with-different-credential":
+      return "cuenta_proveedor_diferente";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "inicio_social_cancelado";
+    case "auth/operation-not-allowed":
+    case "auth/unauthorized-domain":
+    case "auth/popup-blocked":
+      return "proveedor_social_no_disponible";
     case "auth/weak-password":
       return "password_debil";
     case "auth/user-disabled":
@@ -47,6 +58,55 @@ function traducirError(codigoFirebase: string): CodigoErrorAuth {
       return "error_red";
     default:
       return "error_desconocido";
+  }
+}
+
+function separarNombre(displayName: string | null): {
+  nombre: string;
+  apellido: string;
+} {
+  const partes = (displayName ?? "").trim().split(/\s+/).filter(Boolean);
+  return {
+    nombre: partes[0] || "Huésped",
+    apellido: partes.slice(1).join(" "),
+  };
+}
+
+async function asegurarPerfilFacebook(
+  usuarioFb: UsuarioFirebase,
+): Promise<void> {
+  const ref = doc(obtenerDb(), COLECCION_USUARIOS, usuarioFb.uid);
+  const existente = await getDoc(ref);
+  if (existente.exists()) return;
+
+  const email = usuarioFb.email?.trim().toLowerCase();
+  if (!email) {
+    await signOut(obtenerAuth());
+    throw new ErrorAuth(
+      "correo_social_no_disponible",
+      "Facebook no proporcionó un correo electrónico.",
+    );
+  }
+
+  const { nombre, apellido } = separarNombre(usuarioFb.displayName);
+
+  try {
+    await setDoc(ref, {
+      email,
+      nombre,
+      apellido,
+      telefono: null,
+      rol: "huesped",
+      activo: true,
+      creadoEn: serverTimestamp(),
+      actualizadoEn: serverTimestamp(),
+    });
+  } catch {
+    await signOut(obtenerAuth());
+    throw new ErrorAuth(
+      "perfil_social_no_creado",
+      "No se pudo crear el perfil de huésped.",
+    );
   }
 }
 
@@ -103,6 +163,25 @@ export const authFirebase: ServicioAuth = {
       if (error instanceof ErrorAuth) throw error;
       const codigo = (error as { code?: string }).code ?? "";
       throw new ErrorAuth(traducirError(codigo), "No se pudo iniciar sesión.");
+    }
+  },
+
+  async loginFacebook(): Promise<Sesion> {
+    try {
+      const provider = new FacebookAuthProvider();
+      provider.addScope("email");
+      provider.setCustomParameters({ display: "popup" });
+
+      const credencial = await signInWithPopup(obtenerAuth(), provider);
+      await asegurarPerfilFacebook(credencial.user);
+      return await construirSesion(credencial.user);
+    } catch (error) {
+      if (error instanceof ErrorAuth) throw error;
+      const codigo = (error as { code?: string }).code ?? "";
+      throw new ErrorAuth(
+        traducirError(codigo),
+        "No se pudo iniciar sesión con Facebook.",
+      );
     }
   },
 
