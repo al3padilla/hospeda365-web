@@ -11,7 +11,7 @@ import {
 } from "react";
 
 import {
-  cancelarReserva,
+  cancelarReservaHuesped,
   crearReserva as crearReservaFirestore,
   escucharReservasUsuario,
 } from "../servicios/hotelFirestore";
@@ -79,7 +79,7 @@ export function ReservasProvider({ children }: { children: ReactNode }) {
   );
 
   const cancelar = useCallback(async (id: string) => {
-    await cancelarReserva(id);
+    await cancelarReservaHuesped(id);
   }, []);
 
   const value = useMemo<ReservasContextValue>(

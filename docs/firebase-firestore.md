@@ -106,4 +106,16 @@ La migración no crea usuarios de Authentication ni asigna roles. La cuenta admi
 
 ## Comprobantes
 
-El flujo actual registra `comprobanteNombre` en Firestore. La carga binaria requiere integrar Firebase Storage y guardar su URL en `comprobanteUrl`.
+El simulador registra `comprobanteGenerado` y `comprobanteNombre` en la reserva en Firestore. El servidor genera el PDF por ID para los usuarios con permiso de lectura sobre la reserva. El panel cambia el estado del pago y de la reserva en la misma transacción. Las reservas históricas con una URL de Storage conservan el enlace original.
+
+Las reglas de Storage permiten cargar un PDF, JPG o PNG de hasta 5 MB en la ruta del huésped. El acceso por SDK al objeto corresponde al propietario y al personal activo. La URL de descarga con token se guarda en el documento de la reserva, que tiene permisos de lectura propios.
+
+El panel admite fechas ISO y fechas históricas del móvil guardadas como `Timestamp`, y ordena las reservas por `creadaEn` o `createdAt`.
+
+## Pago simulado
+
+La web y Android registran las solicitudes con pago pendiente. Una vez que recepción confirma la reserva, el huésped puede simular el pago desde el historial web. Los 16 dígitos ficticios son visibles mientras se escriben y se agrupan automáticamente de cuatro en cuatro. El número queda en el formulario y se borra al enviarlo. El resumen solo muestra los últimos cuatro. La web registra el comprobante en la reserva antes de solicitar el envío por correo.
+
+Para habilitar el correo, configura `RESEND_API_KEY` y `PAGO_SIMULADO_REMITENTE` en el servidor web con un remitente autorizado por Resend. El destinatario debe ser el correo verificado de la cuenta de Firebase. Despliega las reglas de Firestore de este repositorio en el Firebase de pruebas para habilitar el registro del comprobante simulado.
+
+En Android, configura `EXPO_PUBLIC_HOSPEDA365_WEB_URL` con la URL de la web para abrir el formulario desde Mis reservas.

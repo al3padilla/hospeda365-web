@@ -1,22 +1,67 @@
 "use client";
 import {useEffect,useMemo,useState,type FormEvent} from "react";
 import {useRouter} from "next/navigation";
-import {BedDouble,CalendarDays,CheckCircle2,ClipboardCheck,Eye,FileText,Home,LayoutDashboard,LogOut,Pencil,Plus,Search,ShieldCheck,Trash2,X} from "lucide-react";
+import {BedDouble,CalendarDays,CheckCircle2,ClipboardCheck,Clock3,Eye,FileText,Home,LayoutDashboard,LogOut,Pencil,Plus,Search,ShieldCheck,Trash2,X,XCircle} from "lucide-react";
 import {useAuth} from "../../contexto/AuthContext";
 import {useAdmin} from "../../contexto/AdminContext";
 import type {EstadoHabitacion,ReservaAdmin} from "../../servicios/adminService";
 import {calcularNoches} from "../../datos/fechas";
 import styles from "./admin.module.css";
 import DashboardAdmin from "./DashboardAdmin";
+import { descargarComprobanteSimulado } from "../../servicios/comprobanteSimulado";
+import { resolverReservaPendiente } from "../../servicios/hotelFirestore";
+import { comprobantePorValidar } from "../../datos/metricasPanel";
 const roomLabel={AVAILABLE:"Disponible",OCCUPIED:"Ocupada",CLEANING:"Limpieza",MAINTENANCE:"Mantenimiento"} as const;
-const payLabel={PENDING:"Pendiente",APPROVED:"Aprobado",REJECTED:"Rechazado"} as const;
+function pagoVisible(reserva: ReservaAdmin) {
+  if (reserva.paymentStatus === "APPROVED") return "Aprobado";
+  if (reserva.paymentStatus === "REJECTED") return "Rechazado";
+  if (comprobantePorValidar(reserva)) return "En revisión";
+  return reserva.status === "CONFIRMED" ? "Pendiente de pagar" : "Pendiente";
+}
+function accionReserva(reserva: ReservaAdmin) {
+  if (comprobantePorValidar(reserva) || reserva.status === "PENDING") {
+    return { Icono: Clock3, etiqueta: "Revisar" };
+  }
+  if (reserva.status === "CONFIRMED") return { Icono: CheckCircle2, etiqueta: "Ver confirmada" };
+  if (reserva.status === "REJECTED") return { Icono: XCircle, etiqueta: "Ver rechazada" };
+  return { Icono: Eye, etiqueta: "Ver reserva" };
+}
 const resLabel={PENDING:"Pendiente",CONFIRMED:"Confirmada",IN_PROGRESS:"En curso",COMPLETED:"Finalizada",CANCELLED:"Cancelada",REJECTED:"Rechazada"} as const;
 type FormData={guestName:string;roomId:string;checkIn:string;checkOut:string;amount:string;proof:string};
 const empty:FormData={guestName:"",roomId:"",checkIn:"",checkOut:"",amount:"",proof:""};
-export default function AdminPage(){const router=useRouter();const{usuario,estaAutenticado,estaCargando,esPersonal,nombreCompleto,logout}=useAuth();const{reservations,rooms,loading,createReservation,updateReservation,deleteReservation,setPayment,setRoomStatus}=useAdmin();const[search,setSearch]=useState("");const[editing,setEditing]=useState<ReservaAdmin|null>(null);const[viewing,setViewing]=useState<ReservaAdmin|null>(null);const[form,setForm]=useState<FormData|null>(null);const[vista,setVista]=useState<"principal"|"dashboard">(()=>typeof window!=="undefined"&&window.location.hash==="#dashboard"?"dashboard":"principal");
+export default function AdminPage(){const router=useRouter();const{usuario,estaAutenticado,estaCargando,esPersonal,nombreCompleto,logout}=useAuth();const{reservations,rooms,loading,createReservation,updateReservation,deleteReservation,setPayment,setRoomStatus}=useAdmin();const[search,setSearch]=useState("");const[editing,setEditing]=useState<ReservaAdmin|null>(null);const[viewingId,setViewing]=useState<string|null>(null);const[errorPago,setErrorPago]=useState("");const[validando,setValidando]=useState(false);const[form,setForm]=useState<FormData|null>(null);const[vista,setVista]=useState<"principal"|"dashboard">(()=>typeof window!=="undefined"&&window.location.hash==="#dashboard"?"dashboard":"principal");
 useEffect(()=>{if(estaCargando)return;if(!estaAutenticado){router.replace("/login");return}if(!esPersonal)router.replace("/mi-cuenta")},[estaCargando,estaAutenticado,esPersonal,router]);
-const filtered=useMemo(()=>reservations.filter(r=>(r.id+" "+r.guestName+" "+r.roomTitle).toLowerCase().includes(search.toLowerCase())),[reservations,search]);const pending=reservations.filter(r=>r.paymentStatus==="PENDING").length;const confirmed=reservations.filter(r=>r.status==="CONFIRMED").length;const available=rooms.filter(r=>r.status==="AVAILABLE").length;
+const filtered=useMemo(()=>reservations.filter(r=>(r.id+" "+r.guestName+" "+r.roomTitle).toLowerCase().includes(search.toLowerCase())),[reservations,search]);const viewing=reservations.find(r=>r.id===viewingId);const proofs=reservations.filter(comprobantePorValidar);const pending=proofs.length;const confirmed=reservations.filter(r=>r.status==="CONFIRMED").length;const available=rooms.filter(r=>r.status==="AVAILABLE").length;
 if(estaCargando||loading||!estaAutenticado||!esPersonal)return <div className={styles.loading}>Cargando panel…</div>;
+function abrirComprobante(id: string) {
+  setErrorPago("");
+  setViewing(id);
+}
+async function descargarComprobante(id: string) {
+  setErrorPago("");
+  try {
+    await descargarComprobanteSimulado(id);
+  } catch {
+    setErrorPago("No se pudo descargar el comprobante.");
+  }
+}
+async function resolverEstado(value: "CONFIRMED" | "REJECTED") {
+  if (!viewing || validando) return;
+  setValidando(true);
+  setErrorPago("");
+  try {
+    if (comprobantePorValidar(viewing)) {
+      await setPayment(viewing.id, value === "CONFIRMED" ? "APPROVED" : "REJECTED");
+    } else {
+      await resolverReservaPendiente(viewing.id, value);
+    }
+    setViewing(null);
+  } catch {
+    setErrorPago("No se pudo actualizar la reserva. Comprueba su estado e intenta de nuevo.");
+  } finally {
+    setValidando(false);
+  }
+}
 async function signOut(){await logout();router.replace("/login")}
 function irA(id:string){setVista("principal");setTimeout(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth"}),50)}
 function openNew(){setEditing(null);setForm(empty)}function openEdit(r:ReservaAdmin){setEditing(r);setForm({guestName:r.guestName,roomId:r.roomId,checkIn:r.checkIn,checkOut:r.checkOut,amount:String(r.amount),proof:r.proof})}
@@ -25,7 +70,7 @@ return <main className={styles.page}><aside className={styles.sidebar}><div clas
 {vista==="dashboard"?<DashboardAdmin reservations={reservations} rooms={rooms}/>:<>
 <div className={styles.cards}><article><CalendarDays/><span>Reservas</span><strong>{reservations.length}</strong></article><article><FileText/><span>Por validar</span><strong>{pending}</strong></article><article><BedDouble/><span>Disponibles</span><strong>{available}</strong></article><article><CheckCircle2/><span>Confirmadas</span><strong>{confirmed}</strong></article></div>
 <section className={styles.panel} id="habitaciones"><div className={styles.panelHead}><div><h2>Gestión de habitaciones</h2><p>Actualiza el estado operativo de cada habitación.</p></div></div><div className={styles.rooms}>{rooms.map(room=><article key={room.id}><div className={styles.roomImage}><BedDouble/></div><div className={styles.roomBody}><div><small>{room.number}</small><h3>{room.title}</h3></div><span className={`${styles.roomStatus} ${styles[room.status==="AVAILABLE"?"available":room.status==="OCCUPIED"?"occupied":"cleaning"]}`}>{roomLabel[room.status]}</span><select value={room.status} onChange={e=>setRoomStatus(room.id,e.target.value as EstadoHabitacion)}><option value="AVAILABLE">Disponible</option><option value="OCCUPIED">Ocupada</option><option value="CLEANING">Limpieza</option><option value="MAINTENANCE">Mantenimiento</option></select></div></article>)}</div></section>
-<section className={styles.panel} id="reservas"><div className={styles.panelHead}><div><h2>Gestión de reservas</h2><p>Consulta y actualiza las reservas registradas.</p></div><button className={styles.primary} onClick={openNew}><Plus/>Nueva reserva</button></div><label className={styles.search}><Search/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar reserva o huésped…"/></label><div className={styles.tableWrap}><table><thead><tr><th>ID Reserva</th><th>Cliente</th><th>Habitación</th><th>Fechas</th><th>Reserva</th><th>Pago</th><th>Acciones</th></tr></thead><tbody>{filtered.map(r=><tr key={r.id}><td><strong>{r.id}</strong></td><td>{r.guestName}</td><td>{r.roomTitle}</td><td>{r.checkIn}<small> → {r.checkOut}</small></td><td><span className={`${styles.badge} ${styles[r.status==="CONFIRMED"?"approved":r.status==="REJECTED"||r.status==="CANCELLED"?"rejected":"pending"]}`}>{resLabel[r.status]}</span></td><td><span className={`${styles.badge} ${styles[r.paymentStatus==="APPROVED"?"approved":r.paymentStatus==="REJECTED"?"rejected":"pending"]}`}>{payLabel[r.paymentStatus]}</span></td><td><div className={styles.rowActions}><button title="Ver" onClick={()=>setViewing(r)}><Eye/></button><button title="Editar" onClick={()=>openEdit(r)}><Pencil/></button><button title="Cancelar" onClick={()=>confirm(`¿Cancelar ${r.id}?`)&&deleteReservation(r.id)}><Trash2/></button></div></td></tr>)}</tbody></table></div></section>
-<section className={styles.panel} id="comprobantes"><div className={styles.panelHead}><div><h2>Validación de comprobantes</h2><p>Aprueba o rechaza los comprobantes de pago adjuntos.</p></div></div><div className={styles.paymentGrid}>{reservations.filter(r=>r.paymentStatus==="PENDING").map(r=><article key={r.id}><FileText/><div><strong>{r.id} · {r.guestName}</strong><small>{r.proof}</small></div><button onClick={()=>setViewing(r)}>Revisar</button></article>)}{pending===0&&<p>No hay comprobantes pendientes.</p>}</div></section></>}</section>
+<section className={styles.panel} id="reservas"><div className={styles.panelHead}><div><h2>Gestión de reservas</h2><p>Consulta y actualiza las reservas registradas.</p></div><button className={styles.primary} onClick={openNew}><Plus/>Nueva reserva</button></div><label className={styles.search}><Search/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar reserva o huésped…"/></label><div className={styles.tableWrap}><table><thead><tr><th>ID Reserva</th><th>Cliente</th><th>Habitación</th><th>Fechas</th><th>Reserva</th><th>Pago</th><th>Acciones</th></tr></thead><tbody>{filtered.map(r=>{const {Icono,etiqueta}=accionReserva(r);return <tr key={r.id}><td><strong>{r.id}</strong></td><td>{r.guestName}</td><td>{r.roomTitle}</td><td>{r.checkIn}<small> → {r.checkOut}</small></td><td><span className={`${styles.badge} ${styles[r.status==="CONFIRMED"?"approved":r.status==="REJECTED"||r.status==="CANCELLED"?"rejected":"pending"]}`}>{resLabel[r.status]}</span></td><td><span className={`${styles.badge} ${styles[r.paymentStatus==="APPROVED"?"approved":r.paymentStatus==="REJECTED"?"rejected":"pending"]}`}>{pagoVisible(r)}</span></td><td><div className={styles.rowActions}><button className={styles.accionReserva} title={etiqueta} aria-label={`${etiqueta} ${r.id}`} onClick={()=>abrirComprobante(r.id)}><Icono aria-hidden="true"/>{etiqueta}</button><button title="Editar" onClick={()=>openEdit(r)}><Pencil/></button><button title="Cancelar" onClick={()=>confirm(`¿Cancelar ${r.id}?`)&&deleteReservation(r.id)}><Trash2/></button></div></td></tr>})}</tbody></table></div></section>
+<section className={styles.panel} id="comprobantes"><div className={styles.panelHead}><div><h2>Validación de comprobantes</h2><p>Aprueba o rechaza los comprobantes de pago adjuntos.</p></div></div><div className={styles.paymentGrid}>{proofs.map(r=><article key={r.id}><FileText/><div><strong>{r.id} · {r.guestName}</strong><small>{r.proof}</small></div><button onClick={()=>abrirComprobante(r.id)}>Revisar</button></article>)}{pending===0&&<p>No hay comprobantes pendientes.</p>}</div></section></>}</section>
 {form&&<div className={styles.overlay}><form className={styles.modal} onSubmit={submit}><button type="button" className={styles.close} onClick={()=>setForm(null)}><X/></button><h2>{editing?"Editar reserva":"Nueva reserva"}</h2><p>Completa los datos de la reserva.</p><div className={styles.formGrid}><label>Huésped<input required value={form.guestName} onChange={e=>setForm({...form,guestName:e.target.value})}/></label><label>Habitación<select required value={form.roomId} onChange={e=>setForm({...form,roomId:e.target.value})}><option value="">Seleccionar…</option>{rooms.map(r=><option key={r.id} value={r.id}>{r.title}</option>)}</select></label><label>Check-in<input type="date" required value={form.checkIn} onChange={e=>setForm({...form,checkIn:e.target.value})}/></label><label>Check-out<input type="date" required value={form.checkOut} onChange={e=>setForm({...form,checkOut:e.target.value})}/></label><label>Monto ($)<input type="number" min="0" required value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})}/></label><label>Comprobante<input value={form.proof} onChange={e=>setForm({...form,proof:e.target.value})} placeholder="Nombre del archivo"/></label></div><div className={styles.actions}><button type="button" className={styles.secondary} onClick={()=>setForm(null)}>Cancelar</button><button className={styles.primary}>Guardar reserva</button></div></form></div>}
-{viewing&&<div className={styles.overlay}><div className={styles.modal}><button className={styles.close} onClick={()=>setViewing(null)}><X/></button><h2>Validación de comprobante</h2><p>{viewing.id} · {viewing.guestName}</p><div className={styles.proof}><FileText/><strong>{viewing.proof}</strong><span>Comprobante adjunto a la reserva</span></div><div className={styles.summary}><span>Habitación<strong>{viewing.roomTitle}</strong></span><span>Monto<strong>${viewing.amount.toFixed(2)}</strong></span></div><div className={styles.actions}><button className={styles.reject} onClick={async()=>{await setPayment(viewing.id,"REJECTED");setViewing(null)}}>Rechazar</button><button className={styles.primary} onClick={async()=>{await setPayment(viewing.id,"APPROVED");setViewing(null)}}>Aprobar comprobante</button></div></div></div>}</main>}
+{viewing&&<div className={styles.overlay}><div className={styles.modal}><button className={styles.close} disabled={validando} onClick={()=>setViewing(null)}><X/></button><h2>{comprobantePorValidar(viewing) ? "Validación de comprobante" : "Detalle de la reserva"}</h2><p>{viewing.id} · {viewing.guestName}</p><div className={styles.proof}><FileText/><strong>{viewing.proof}</strong>{viewing.proofGenerated ? <button className={styles.secondary} onClick={()=>void descargarComprobante(viewing.id)}>Descargar comprobante</button> : viewing.proofUrl?.startsWith("https://") ? <a href={viewing.proofUrl} target="_blank" rel="noopener noreferrer">Abrir comprobante</a> : <span>Archivo no disponible</span>}</div><div className={styles.summary}><span>Habitación<strong>{viewing.roomTitle}</strong></span><span>Monto<strong>${viewing.amount.toFixed(2)}</strong></span></div>{errorPago&&<p role="alert">{errorPago}</p>}{viewing.status==="PENDING"&&!comprobantePorValidar(viewing)&&<p>Confirmar o rechazar la reserva conserva el estado del pago.</p>}{(viewing.status==="PENDING"||comprobantePorValidar(viewing))&&<div className={styles.actions}><button className={styles.reject} disabled={validando} onClick={()=>void resolverEstado("REJECTED")}>Rechazar reserva</button><button className={styles.primary} disabled={validando} onClick={()=>void resolverEstado("CONFIRMED")}>{comprobantePorValidar(viewing) ? "Aprobar comprobante" : "Confirmar reserva"}</button></div>}</div></div>}</main>}

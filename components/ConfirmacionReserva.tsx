@@ -1,16 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ChangeEvent, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import {
   BedDouble,
   CalendarCheck,
   CalendarX2,
   CheckCircle2,
-  FileImage,
   Moon,
   Receipt,
-  Upload,
   Users,
 } from "lucide-react";
 
@@ -48,7 +46,6 @@ export default function ConfirmacionReserva({
   const [checkOut, setCheckOut] = useState(
     () => checkOutInicial || fechasPorDefecto().checkOut,
   );
-  const [archivo, setArchivo] = useState<File | null>(null);
   const [codigoReserva, setCodigoReserva] = useState<string | null>(null);
 
   const noches = calcularNoches(checkIn, checkOut);
@@ -64,14 +61,9 @@ export default function ConfirmacionReserva({
     setCodigoReserva(null);
   }
 
-  function onFileChange(event: ChangeEvent<HTMLInputElement>) {
-    setArchivo(event.target.files?.[0] ?? null);
-    setCodigoReserva(null);
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!estaAutenticado || !habitacion || !archivo || guardando) return;
+    if (!estaAutenticado || !habitacion || guardando) return;
 
     const id = await crearReserva({
       roomId: habitacion.id,
@@ -86,7 +78,7 @@ export default function ConfirmacionReserva({
       nights: noches,
       pricePerNight: habitacion.pricePerNight,
       amount: total,
-      proof: archivo.name,
+      proof: "",
     });
     setCodigoReserva(id);
   }
@@ -109,7 +101,7 @@ export default function ConfirmacionReserva({
           Confirmación de reserva
         </h1>
         <p className="leading-relaxed text-mist">
-          Revisa las fechas, el total y la referencia del comprobante.
+          Revisa las fechas y el total antes de solicitar la reserva.
         </p>
       </header>
 
@@ -193,42 +185,16 @@ export default function ConfirmacionReserva({
           >
             <div>
               <h2 className="font-[family-name:var(--font-display)] text-2xl text-sea">
-                Comprobante de pago
+                Solicitud de reserva
               </h2>
               <p className="text-sm leading-relaxed text-mist">
-                Sube una captura o PDF de tu transferencia. Luego
-                confirma la reserva.
+                Recepción revisará tu solicitud. Podrás simular el pago desde Mis reservas cuando se confirme.
               </p>
             </div>
 
-            <label className="flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-sea/20 px-4 py-10 text-center">
-              <input
-                type="file"
-                accept="image/*,.pdf"
-                className="sr-only"
-                disabled={guardando}
-                onChange={onFileChange}
-              />
-              {archivo ? (
-                <>
-                  <FileImage className="h-10 w-10 text-sea" aria-hidden />
-                  <span className="break-all text-sm font-medium text-sea">
-                    {archivo.name}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Upload className="h-10 w-10 text-mist" aria-hidden />
-                  <span className="text-sm font-medium text-sea">
-                    Seleccionar comprobante
-                  </span>
-                </>
-              )}
-            </label>
-
             <button
               type="submit"
-              disabled={!estaAutenticado || !archivo || guardando}
+              disabled={!estaAutenticado || guardando}
               className="mt-auto inline-flex w-full items-center justify-center gap-2 rounded-md bg-coral py-3 font-semibold text-white disabled:opacity-45"
             >
               {guardando ? (
@@ -237,7 +203,7 @@ export default function ConfirmacionReserva({
                   Registrando…
                 </>
               ) : (
-                "Confirmar reserva"
+                "Solicitar reserva"
               )}
             </button>
 
@@ -260,8 +226,7 @@ export default function ConfirmacionReserva({
               <p className="flex gap-2 rounded-md border border-sea/10 bg-background px-3 py-3 text-sm text-sea">
                 <CheckCircle2 className="h-5 w-5 shrink-0 text-coral" aria-hidden />
                 <span>
-                  ¡Reserva realizada con éxito! Tu comprobante{" "}
-                  <strong>{archivo?.name}</strong> fue recibido correctamente.
+                  Solicitud registrada. Consulta su estado en <Link href="/historial" className="font-semibold underline">Mis reservas</Link>.
                 </span>
               </p>
             ) : null}

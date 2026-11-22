@@ -1,4 +1,4 @@
-export type EstadoReserva = "confirmada" | "pendiente" | "cancelada";
+export type EstadoReserva = "confirmada" | "pendiente" | "cancelada" | "rechazada";
 
 export type ReservaHistorial = {
   id: string;
@@ -8,6 +8,11 @@ export type ReservaHistorial = {
   checkOut: string;
   total: number;
   estado: EstadoReserva;
+  estadoPago?: string;
+  puedePagar?: boolean;
+  puedeCancelar?: boolean;
+  pagoSimuladoEnRevision?: boolean;
+  comprobanteAprobado?: { generado: boolean; url: string | null };
   adultos: number;
   ninos: number;
   bebes: number;

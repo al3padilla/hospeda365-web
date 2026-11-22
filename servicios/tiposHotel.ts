@@ -45,13 +45,15 @@ export type Reserva = {
   amount: number;
   status: EstadoReserva;
   paymentStatus: EstadoPago;
+  paymentUnsubmitted?: boolean;
   proof: string;
   proofUrl: string | null;
+  proofGenerated?: boolean;
 };
 
 export type NuevaReserva = Omit<
   Reserva,
-  "id" | "status" | "paymentStatus" | "proofUrl"
+  "id" | "status" | "paymentStatus" | "paymentUnsubmitted" | "proofUrl" | "proofGenerated"
 > & {
   roomNumber?: string;
   proofUrl?: string | null;

@@ -103,8 +103,20 @@ service cloud.firestore {
       allow update: if activo() && (
                       esPersonal()
                       || (resource.data.usuarioId == request.auth.uid
+                          && resource.data.estado in ['pendiente', 'confirmada']
+                          && resource.data.estadoPago == 'sin_comprobante'
                           && soloModifica(['estado', 'actualizadaEn'])
-                          && request.resource.data.estado == 'cancelada')
+                          && request.resource.data.estado == 'cancelada'
+                          && request.resource.data.actualizadaEn == request.time)
+                      || (resource.data.usuarioId == request.auth.uid
+                          && resource.data.estado == 'confirmada'
+                          && resource.data.estadoPago in ['sin_comprobante', 'rechazado']
+                          && soloModifica(['estadoPago', 'comprobanteNombre', 'comprobanteGenerado', 'comprobanteUrl', 'actualizadaEn'])
+                          && request.resource.data.estadoPago == 'en_revision'
+                          && request.resource.data.actualizadaEn == request.time
+                          && request.resource.data.comprobanteGenerado == true
+                          && request.resource.data.comprobanteNombre == 'comprobante-simulado-' + reservaId + '.pdf'
+                          && request.resource.data.comprobanteUrl == null)
                     );
 
       allow delete: if false;
