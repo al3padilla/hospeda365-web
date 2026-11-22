@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Baby, Minus, Plus, User, Users } from "lucide-react";
+import { pluralizar } from "../datos/texto";
 
 export type Huespedes = {
   adultos: number;
@@ -25,9 +26,9 @@ export function totalParaCapacidad(h: Huespedes): number {
 
 function resumen(h: Huespedes): string {
   const partes: string[] = [];
-  partes.push(`${h.adultos} adulto${h.adultos === 1 ? "" : "s"}`);
-  if (h.ninos > 0) partes.push(`${h.ninos} niño${h.ninos === 1 ? "" : "s"}`);
-  if (h.bebes > 0) partes.push(`${h.bebes} bebé${h.bebes === 1 ? "" : "s"}`);
+  partes.push(pluralizar(h.adultos, "adulto"));
+  if (h.ninos > 0) partes.push(pluralizar(h.ninos, "niño"));
+  if (h.bebes > 0) partes.push(pluralizar(h.bebes, "bebé"));
   return partes.join(", ");
 }
 

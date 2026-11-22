@@ -11,6 +11,7 @@ import {
 import type { ReservaHistorial } from "../datos/historialReservas";
 import { calcularNoches, formatearFecha } from "../datos/fechas";
 import { formatearPrecio } from "../datos/reserva";
+import { pluralizar } from "../datos/texto";
 
 type BadgeEstadoProps = {
   label: string;
@@ -26,16 +27,16 @@ type ReservaHistorialModalProps = {
 
 function textoHuespedes(reserva: ReservaHistorial): string {
   const partes = [
-    `${reserva.adultos} adulto${reserva.adultos === 1 ? "" : "s"}`,
+    pluralizar(reserva.adultos, "adulto"),
   ];
   if (reserva.ninos > 0) {
     partes.push(
-      `${reserva.ninos} niño${reserva.ninos === 1 ? "" : "s"}`,
+      pluralizar(reserva.ninos, "niño"),
     );
   }
   if (reserva.bebes > 0) {
     partes.push(
-      `${reserva.bebes} bebé${reserva.bebes === 1 ? "" : "s"}`,
+      pluralizar(reserva.bebes, "bebé"),
     );
   }
   return partes.join(", ");
@@ -133,7 +134,7 @@ export default function ReservaHistorialModal({
           <div className="flex flex-wrap gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-sea/10 bg-background px-3 py-2 text-sea">
               <Moon className="h-4 w-4 text-coral" aria-hidden />
-              {noches} noche{noches === 1 ? "" : "s"}
+              {pluralizar(noches, "noche")}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-sea/10 bg-background px-3 py-2 text-sea">
               <Users className="h-4 w-4 text-coral" aria-hidden />

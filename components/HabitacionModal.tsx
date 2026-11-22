@@ -3,6 +3,7 @@
 import { BedDouble, Check, Users, X, ZoomIn } from "lucide-react";
 import type { Habitacion } from "../datos/habitaciones";
 import { formatearPrecio } from "../datos/reserva";
+import { pluralizar } from "../datos/texto";
 
 type HabitacionModalProps = {
   habitacion: Pick<
@@ -92,7 +93,7 @@ export default function HabitacionModal({
           <div className="flex flex-wrap gap-3 text-sm">
             <span className="inline-flex items-center gap-1.5 rounded-md border border-sea/10 bg-background px-3 py-2 text-sea">
               <Users className="h-4 w-4 text-coral" aria-hidden />
-              Hasta {capacity} persona{capacity === 1 ? "" : "s"}
+              Hasta {pluralizar(capacity, "persona")}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-sea/10 bg-background px-3 py-2 text-sea">
               <BedDouble className="h-4 w-4 text-coral" aria-hidden />
