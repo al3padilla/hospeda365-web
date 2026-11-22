@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown, LogOut, UserCircle2 } from "lucide-react";
+import { ChevronDown, LayoutDashboard, LogOut, UserCircle2 } from "lucide-react";
 
 import { useAuth } from "../contexto/AuthContext";
 
@@ -51,6 +51,8 @@ export default function NavbarAuth() {
     );
   }
 
+  const esAdministrador = usuario.rol === "admin";
+
   return (
     <div className="relative" ref={contenedorRef}>
       <button
@@ -87,13 +89,17 @@ export default function NavbarAuth() {
           </div>
 
           <Link
-            href="/mi-cuenta"
+            href={esAdministrador ? "/admin" : "/mi-cuenta"}
             role="menuitem"
             onClick={() => setAbierto(false)}
             className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-sea transition hover:bg-[#e8f4fa]"
           >
-            <UserCircle2 className="h-4 w-4 text-mist" aria-hidden />
-            Mi cuenta
+            {esAdministrador ? (
+              <LayoutDashboard className="h-4 w-4 text-mist" aria-hidden />
+            ) : (
+              <UserCircle2 className="h-4 w-4 text-mist" aria-hidden />
+            )}
+            {esAdministrador ? "Panel administrativo" : "Mi cuenta"}
           </Link>
 
           <button
@@ -135,6 +141,8 @@ export function NavbarAuthMovil({ onNavegar }: { onNavegar?: () => void }) {
     );
   }
 
+  const esAdministrador = usuario.rol === "admin";
+
   return (
     <div className="flex flex-col gap-2 border-t border-sea/10 pt-3">
       <div className="flex items-center gap-2.5">
@@ -152,11 +160,11 @@ export function NavbarAuthMovil({ onNavegar }: { onNavegar?: () => void }) {
       </div>
 
       <Link
-        href="/mi-cuenta"
+        href={esAdministrador ? "/admin" : "/mi-cuenta"}
         onClick={onNavegar}
         className="rounded-md border border-sea/20 py-2 text-center text-sm text-sea"
       >
-        Mi cuenta
+        {esAdministrador ? "Panel administrativo" : "Mi cuenta"}
       </Link>
 
       <button

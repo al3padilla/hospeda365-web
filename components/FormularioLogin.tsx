@@ -19,7 +19,18 @@ const DESTINO_POR_ROL = {
 } as const;
 
 function destinoSeguro(redirectTo: string | undefined, rol: keyof typeof DESTINO_POR_ROL) {
+  if (rol === "admin" || rol === "recepcionista") {
+    return "/admin";
+  }
+
   if (redirectTo?.startsWith("/") && !redirectTo.startsWith("//")) {
+    if (
+      redirectTo === "/admin" ||
+      redirectTo.startsWith("/admin/") ||
+      redirectTo.startsWith("/admin?")
+    ) {
+      return DESTINO_POR_ROL[rol];
+    }
     return redirectTo;
   }
   return DESTINO_POR_ROL[rol];
