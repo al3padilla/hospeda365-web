@@ -1,9 +1,12 @@
-# Hospeda365 Web
+# Hospeda365 Web — Hotel Terra Azul
 
-Plataforma web de **Hotel Terra Azul** impulsada por Hospeda365.  
-Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, y al personal operar el panel administrativo.
+Plataforma web del **Hotel Terra Azul** impulsada por **Hospeda365**.  
+Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, y al personal operar el panel administrativo de forma sincronizada en tiempo real con la aplicación móvil.
 
-**Producción:** [https://hospeda365-web.vercel.app/](https://hospeda365-web.vercel.app/)
+## Enlaces del Proyecto
+
+* **Aplicación Web en Producción (Vercel):** [https://hospeda365-web.vercel.app/](https://hospeda365-web.vercel.app/)
+* **Repositorio Aplicación Móvil (React Native):** [https://github.com/al3padilla/hospeda365-app](https://github.com/al3padilla/hospeda365-app)
 
 ---
 
@@ -15,15 +18,30 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 | **React 19** | Interfaz |
 | **TypeScript** | Tipado estático |
 | **Tailwind CSS 4** | Estilos |
-| **Firebase** | Auth + Cloud Firestore |
+| **Firebase** | Auth (Correo y Google) + Cloud Firestore + Storage |
 | **Lucide React** | Iconografía |
+
+---
+
+## Módulos y Sincronización Multiplataforma
+
+* **Autenticación completa:** Registro e inicio de sesión mediante correo electrónico y **Google** con control de acceso por roles (`huésped` y `admin`).
+* **Persistencia compartida en tiempo real:** Conexión directa con Cloud Firestore (`users`, `rooms` y `bookings`) sincronizada al instante con `hospeda365-app`.
+* **Módulo del Huésped:** Catálogo de habitaciones disponibles, filtro por fechas y capacidad, cálculo automático de estadía, carga de comprobantes en Storage e historial *Mis Reservas*.
+* **Panel Administrativo:** Dashboard con métricas dinámicas (ocupación, ingresos confirmados, por cobrar y ganancias mensuales), validación de comprobantes y gestión de estados de habitaciones.
+
+---
+
+## Mockups de Diseño (Etapa 1 - Figma)
+
+(IMG DISEÑOS)
 
 ---
 
 ## Requisitos
 
 - Node.js **20+**
-- Proyecto Firebase con **Authentication** (Email/Password) y **Cloud Firestore**
+- Proyecto Firebase con **Authentication** (Email/Password y Google), **Cloud Firestore** y **Storage** (compartido con `hospeda365-app`)
 - Cuenta administradora en Firestore: `users/{uid}` con `rol: "admin"`
 
 ---
@@ -95,7 +113,7 @@ npm run seed:firestore
 | `servicios/` | Firebase Auth y operaciones de Firestore |
 | `datos/` | Tipos y utilidades puras |
 | `scripts/` | Datos y script de migración |
-| `docs/` | Especificación técnica |
+| `docs/` | Especificación técnica y mockups de Figma |
 
 ---
 
@@ -107,8 +125,21 @@ firebase deploy --only firestore:rules,firestore:indexes
 
 La definición de colecciones, permisos e índices está documentada en [docs/firebase-firestore.md](docs/firebase-firestore.md).
 
+---
 
-## 📄 Licencia
+## Equipo de Desarrollo (EcoTech Solutions)
+
+Integrantes:
+
+- Alexander Ulises Elías Vásquez | EV210855
+- Marlene Noemy López de Servando | LQ221481
+- Jonathan Américo Merino Medina | MM221719
+- Alexandra Guadalupe Padilla Ramírez | NR221019
+- Jason Oswaldo Sosa Hernández | SH210738
+
+---
+
+## Licencia
 
 Este proyecto está protegido bajo la licencia **Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)**.
 
