@@ -34,7 +34,31 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 
 ## Mockups de Diseño (Etapa 1 - Figma)
 
-(IMG DISEÑOS)
+[Consultar diseño original en Figma](https://www.figma.com/design/Ffof4DCOZYSizHP9uBn2H4/)
+
+### Inicio de sesión
+
+<p align="center">
+  <img src="docs/mockups/figma-login.png" width="850" />
+</p>
+
+### Catálogo de habitaciones
+
+<p align="center">
+  <img src="docs/mockups/figma-catalogo.png" width="850" />
+</p>
+
+### Gestión de reservas
+
+<p align="center">
+  <img src="docs/mockups/figma-reservas.png" width="850" />
+</p>
+
+### Confirmación de reserva
+
+<p align="center">
+  <img src="docs/mockups/figma-confirmacion.png" width="850" />
+</p>
 
 ---
 
