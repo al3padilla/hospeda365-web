@@ -38,8 +38,15 @@ function destinoSeguro(redirectTo: string | undefined, rol: keyof typeof DESTINO
 
 export default function FormularioLogin({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter();
-  const { login, estaAutenticado, usuario, estaCargando, error, limpiarError } =
-    useAuth();
+  const {
+    login,
+    loginFacebook,
+    estaAutenticado,
+    usuario,
+    estaCargando,
+    error,
+    limpiarError,
+  } = useAuth();
 
   const [datos, setDatos] = useState<Credenciales>({ email: "", password: "" });
   const [errores, setErrores] = useState<ErroresCampo<Credenciales>>({});
@@ -148,9 +155,24 @@ export default function FormularioLogin({ redirectTo }: { redirectTo?: string })
           <span className="h-px flex-1 bg-sea/10" />
         </div>
 
+        <button
+          type="button"
+          disabled={estaCargando}
+          onClick={() => void loginFacebook()}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#1877f2] py-2.5 text-sm font-semibold text-white transition hover:bg-[#1468d4] disabled:cursor-wait disabled:opacity-60"
+        >
+          <span
+            className="flex h-4 w-4 items-end justify-center font-sans text-lg font-black leading-none"
+            aria-hidden
+          >
+            f
+          </span>
+          Continuar con Facebook
+        </button>
+
         <Link
           href="/registro"
-          className="block rounded-md border border-sea/20 py-2.5 text-center text-sm font-semibold text-sea transition hover:border-sea/40 hover:text-coral"
+          className="mt-3 block rounded-md border border-sea/20 py-2.5 text-center text-sm font-semibold text-sea transition hover:border-sea/40 hover:text-coral"
         >
           Crear una cuenta
         </Link>

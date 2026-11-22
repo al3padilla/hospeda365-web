@@ -39,6 +39,7 @@ type AuthContextValue = {
 
   /** Resultado de autenticación para control de navegación. */
   login: (credenciales: Credenciales) => Promise<boolean>;
+  loginFacebook: () => Promise<boolean>;
   registrar: (datos: DatosRegistro) => Promise<boolean>;
   logout: () => Promise<void>;
   actualizarPerfil: (cambios: Partial<Usuario>) => Promise<boolean>;
@@ -91,6 +92,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [manejarError],
   );
+
+  const loginFacebook = useCallback(async (): Promise<boolean> => {
+    dispatch({ type: "OPERACION_INICIADA" });
+    try {
+      const sesion = await servicioAuth.loginFacebook();
+      dispatch({ type: "AUTENTICACION_EXITOSA", payload: sesion });
+      return true;
+    } catch (error) {
+      manejarError(error);
+      return false;
+    }
+  }, [manejarError]);
 
   const registrar = useCallback(
     async (datos: DatosRegistro): Promise<boolean> => {
@@ -149,12 +162,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nombreCompleto: selNombreCompleto(state),
       iniciales: selIniciales(state),
       login,
+      loginFacebook,
       registrar,
       logout,
       actualizarPerfil,
       limpiarError,
     }),
-    [state, login, registrar, logout, actualizarPerfil, limpiarError],
+    [
+      state,
+      login,
+      loginFacebook,
+      registrar,
+      logout,
+      actualizarPerfil,
+      limpiarError,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
