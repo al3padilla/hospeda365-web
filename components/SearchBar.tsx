@@ -16,7 +16,9 @@ function mensajeResultado(
   huespedes: Huespedes,
   personas: number,
 ): string {
-  const disponibles = habitaciones.filter((h) => h.capacity >= personas);
+  const disponibles = habitaciones.filter(
+    (h) => h.capacity >= personas && h.status === "AVAILABLE",
+  );
   const detalle = [
     `${huespedes.adultos} adulto${huespedes.adultos === 1 ? "" : "s"}`,
     huespedes.ninos
@@ -35,7 +37,7 @@ function mensajeResultado(
 }
 
 export default function SearchBar() {
-  const { buscar, habitaciones, cargando } = useHabitaciones();
+  const { buscar, habitaciones, cargando, error } = useHabitaciones();
   const [checkIn, setCheckIn] = useState("");
   const [checkOut, setCheckOut] = useState("");
   const [huespedes, setHuespedes] = useState<Huespedes>({
@@ -48,6 +50,10 @@ export default function SearchBar() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (cargando) return;
+    if (error) {
+      setMessage("No se pudo consultar Firebase. Revisa la conexión y reintenta.");
+      return;
+    }
 
     const personas = totalParaCapacidad(huespedes);
 

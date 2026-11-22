@@ -11,15 +11,19 @@ import {
 } from "react";
 
 import {
+  actualizarHabitacion,
   actualizarReserva,
+  cambiarActividadHabitacion,
   cambiarEstadoHabitacion,
   cambiarEstadoPago,
   cancelarReserva,
+  crearHabitacion,
   crearReserva,
   escucharHabitacionesAdmin,
   escucharReservasAdmin,
 } from "../servicios/hotelFirestore";
 import type {
+  DatosHabitacion,
   EstadoHabitacion,
   EstadoPago,
   HabitacionAdmin,
@@ -38,6 +42,9 @@ type AdminContextValue = {
   deleteReservation: (id: string) => Promise<void>;
   setPayment: (id: string, value: EstadoPago) => Promise<void>;
   setRoomStatus: (id: string, value: EstadoHabitacion) => Promise<void>;
+  createRoom: (input: DatosHabitacion) => Promise<void>;
+  updateRoom: (id: string, input: DatosHabitacion) => Promise<void>;
+  setRoomActive: (id: string, active: boolean) => Promise<void>;
 };
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -109,6 +116,36 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     [],
   );
 
+  const exigirAdministrador = useCallback(() => {
+    if (usuario?.rol !== "admin") {
+      throw new Error("Solo un administrador puede gestionar habitaciones.");
+    }
+  }, [usuario?.rol]);
+
+  const createRoom = useCallback(
+    async (input: DatosHabitacion) => {
+      exigirAdministrador();
+      await crearHabitacion(input);
+    },
+    [exigirAdministrador],
+  );
+
+  const updateRoom = useCallback(
+    async (id: string, input: DatosHabitacion) => {
+      exigirAdministrador();
+      await actualizarHabitacion(id, input);
+    },
+    [exigirAdministrador],
+  );
+
+  const setRoomActive = useCallback(
+    async (id: string, active: boolean) => {
+      exigirAdministrador();
+      await cambiarActividadHabitacion(id, active);
+    },
+    [exigirAdministrador],
+  );
+
   const value = useMemo<AdminContextValue>(
     () => ({
       reservations:
@@ -126,6 +163,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       deleteReservation,
       setPayment,
       setRoomStatus,
+      createRoom,
+      updateRoom,
+      setRoomActive,
     }),
     [
       reservations,
@@ -141,6 +181,9 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       deleteReservation,
       setPayment,
       setRoomStatus,
+      createRoom,
+      updateRoom,
+      setRoomActive,
     ],
   );
 

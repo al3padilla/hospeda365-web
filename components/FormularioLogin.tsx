@@ -18,7 +18,14 @@ const DESTINO_POR_ROL = {
   huesped: "/mi-cuenta",
 } as const;
 
-export default function FormularioLogin() {
+function destinoSeguro(redirectTo: string | undefined, rol: keyof typeof DESTINO_POR_ROL) {
+  if (redirectTo?.startsWith("/") && !redirectTo.startsWith("//")) {
+    return redirectTo;
+  }
+  return DESTINO_POR_ROL[rol];
+}
+
+export default function FormularioLogin({ redirectTo }: { redirectTo?: string }) {
   const router = useRouter();
   const { login, estaAutenticado, usuario, estaCargando, error, limpiarError } =
     useAuth();
@@ -29,9 +36,9 @@ export default function FormularioLogin() {
   // También redirige tras un login exitoso, cuando el Context actualiza `usuario`.
   useEffect(() => {
     if (estaAutenticado && usuario) {
-      router.replace(DESTINO_POR_ROL[usuario.rol]);
+      router.replace(destinoSeguro(redirectTo, usuario.rol));
     }
-  }, [estaAutenticado, usuario, router]);
+  }, [estaAutenticado, usuario, router, redirectTo]);
 
   function actualizar(campo: keyof Credenciales, valor: string) {
     setDatos((prev) => ({ ...prev, [campo]: valor }));
