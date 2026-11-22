@@ -30,6 +30,7 @@ type HabitacionesContextValue = {
   error: string | null;
   buscar: (criterios: CriteriosBusqueda) => void;
   limpiarBusqueda: () => void;
+  recargar: () => void;
   obtenerPorId: (id?: string | null) => Habitacion | undefined;
 };
 
@@ -40,6 +41,7 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
   const [busqueda, setBusqueda] = useState<CriteriosBusqueda | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [revision, setRevision] = useState(0);
 
   useEffect(() =>
     escucharHabitaciones(
@@ -52,7 +54,7 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
         setError("No se pudo cargar el catálogo de habitaciones.");
         setCargando(false);
       },
-    ), []);
+    ), [revision]);
 
   const habitacionesFiltradas = useMemo(
     () =>
@@ -72,6 +74,12 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
 
   const limpiarBusqueda = useCallback(() => setBusqueda(null), []);
 
+  const recargar = useCallback(() => {
+    setCargando(true);
+    setError(null);
+    setRevision((value) => value + 1);
+  }, []);
+
   const obtenerPorId = useCallback(
     (id?: string | null) => habitaciones.find((habitacion) => habitacion.id === id),
     [habitaciones],
@@ -86,6 +94,7 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
       error,
       buscar,
       limpiarBusqueda,
+      recargar,
       obtenerPorId,
     }),
     [
@@ -96,6 +105,7 @@ export function HabitacionesProvider({ children }: { children: ReactNode }) {
       error,
       buscar,
       limpiarBusqueda,
+      recargar,
       obtenerPorId,
     ],
   );

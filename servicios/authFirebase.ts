@@ -145,10 +145,23 @@ export const authFirebase: ServicioAuth = {
   async restaurarSesion(): Promise<Sesion | null> {
     // currentUser es null hasta que el SDK termina de restaurar la sesión.
     const usuarioFb = await new Promise<UsuarioFirebase | null>((resolve) => {
-      const cancelar = onAuthStateChanged(obtenerAuth(), (u) => {
+      let completado = false;
+      let cancelar: () => void = () => undefined;
+
+      const terminar = (usuario: UsuarioFirebase | null) => {
+        if (completado) return;
+        completado = true;
+        clearTimeout(timeout);
         cancelar();
-        resolve(u);
-      });
+        resolve(usuario);
+      };
+
+      const timeout = setTimeout(() => terminar(null), 8000);
+      cancelar = onAuthStateChanged(
+        obtenerAuth(),
+        (usuario) => terminar(usuario),
+        () => terminar(null),
+      );
     });
 
     if (!usuarioFb) return null;
