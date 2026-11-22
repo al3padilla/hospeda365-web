@@ -44,6 +44,11 @@ const ESTADO_UI: Record<
     className: "bg-red-50 text-red-700 border-red-200",
     Icon: XCircle,
   },
+  rechazada: {
+    label: "Rechazada",
+    className: "bg-red-50 text-red-700 border-red-200",
+    Icon: XCircle,
+  },
 };
 
 function BadgeEstado({ estado }: { estado: EstadoReserva }) {
@@ -87,6 +92,7 @@ function ReservaCard({
           </h3>
           <BadgeEstado estado={reserva.estado} />
         </div>
+        {reserva.estadoPago && <p className="text-sm font-semibold text-sea">{reserva.estadoPago}</p>}
 
         <p className="flex items-center gap-2 text-sm text-mist">
           <CalendarRange className="h-4 w-4 shrink-0 text-coral" aria-hidden />
@@ -115,9 +121,9 @@ function ReservaCard({
   );
 }
 
-export default function HistorialReservas() {
-  const { estaAutenticado, estaCargando } = useAuth();
-  const { reservas: reservasFirestore, cargando, error } = useReservas();
+export default function HistorialReservas({ reservaInicial }: { reservaInicial?: string }) {
+  const { estaAutenticado, estaCargando, usuario } = useAuth();
+  const { reservas: reservasFirestore, cargando, error, cancelarReserva } = useReservas();
   const reservas = useMemo<ReservaHistorial[]>(
     () =>
       reservasFirestore.map((reserva) => ({
@@ -127,12 +133,24 @@ export default function HistorialReservas() {
         checkIn: reserva.checkIn,
         checkOut: reserva.checkOut,
         total: reserva.amount,
-        estado:
-          reserva.status === "CANCELLED" || reserva.status === "REJECTED"
-            ? "cancelada"
-            : reserva.status === "PENDING"
-              ? "pendiente"
-              : "confirmada",
+        estado: reserva.status === "REJECTED" ? "rechazada"
+          : reserva.status === "CANCELLED" ? "cancelada"
+          : reserva.status === "PENDING" ? "pendiente" : "confirmada",
+        estadoPago: reserva.paymentStatus === "APPROVED" ? "Pago aprobado"
+          : reserva.paymentStatus === "REJECTED" ? "Pago rechazado"
+          : reserva.proofGenerated || reserva.proofUrl ? "Pago en revisión"
+          : reserva.status === "CONFIRMED" ? "Pendiente de pagar" : undefined,
+        puedePagar: reserva.status === "CONFIRMED" &&
+          (reserva.paymentStatus === "REJECTED" ||
+            (reserva.paymentStatus === "PENDING" && !reserva.proofGenerated && !reserva.proofUrl)),
+        puedeCancelar: Boolean(reserva.paymentUnsubmitted) &&
+          (reserva.status === "PENDING" || reserva.status === "CONFIRMED"),
+        pagoSimuladoEnRevision: reserva.status === "CONFIRMED" && reserva.paymentStatus === "PENDING" &&
+          Boolean(reserva.proofGenerated || reserva.proofUrl) && reserva.proof === `comprobante-simulado-${reserva.id}.pdf`,
+        comprobanteAprobado: reserva.paymentStatus === "APPROVED" &&
+          (reserva.proofGenerated || reserva.proofUrl?.startsWith("https://"))
+          ? { generado: Boolean(reserva.proofGenerated), url: reserva.proofUrl }
+          : undefined,
         adultos: reserva.adults,
         ninos: reserva.children,
         bebes: reserva.babies,
@@ -140,12 +158,11 @@ export default function HistorialReservas() {
       })),
     [reservasFirestore],
   );
-  const [seleccionada, setSeleccionada] = useState<ReservaHistorial | null>(
-    null,
-  );
+  const [seleccionadaId, setSeleccionada] = useState<string | null>(reservaInicial ?? null);
+  const seleccionada = reservas.find((reserva) => reserva.id === seleccionadaId);
 
   const cerrar = useCallback(() => setSeleccionada(null), []);
-  useBloqueoModal(seleccionada !== null, cerrar);
+  useBloqueoModal(Boolean(seleccionada), cerrar);
 
   return (
     <div className="container mx-auto max-w-5xl px-4 py-10 sm:py-14">
@@ -188,7 +205,7 @@ export default function HistorialReservas() {
             <ReservaCard
               key={reserva.id}
               reserva={reserva}
-              onAbrir={() => setSeleccionada(reserva)}
+              onAbrir={() => setSeleccionada(reserva.id)}
             />
           ))}
         </div>
@@ -196,7 +213,10 @@ export default function HistorialReservas() {
 
       {seleccionada ? (
         <ReservaHistorialModal
+          key={seleccionada.id}
           reserva={seleccionada}
+          correoCuenta={usuario?.email}
+          onCancelar={() => cancelarReserva(seleccionada.id)}
           badge={ESTADO_UI[seleccionada.estado]}
           onClose={cerrar}
         />

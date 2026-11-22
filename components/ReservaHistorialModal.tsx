@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   BedDouble,
   CalendarCheck,
@@ -12,6 +13,8 @@ import type { ReservaHistorial } from "../datos/historialReservas";
 import { calcularNoches, formatearFecha } from "../datos/fechas";
 import { formatearPrecio } from "../datos/reserva";
 import { pluralizar } from "../datos/texto";
+import PagoSimulado from "./PagoSimulado";
+import { descargarComprobanteSimulado } from "../servicios/comprobanteSimulado";
 
 type BadgeEstadoProps = {
   label: string;
@@ -22,6 +25,8 @@ type BadgeEstadoProps = {
 type ReservaHistorialModalProps = {
   reserva: ReservaHistorial;
   badge: BadgeEstadoProps;
+  correoCuenta?: string;
+  onCancelar: () => Promise<void>;
   onClose: () => void;
 };
 
@@ -45,10 +50,37 @@ function textoHuespedes(reserva: ReservaHistorial): string {
 export default function ReservaHistorialModal({
   reserva,
   badge,
+  correoCuenta,
+  onCancelar,
   onClose,
 }: ReservaHistorialModalProps) {
   const noches = calcularNoches(reserva.checkIn, reserva.checkOut);
   const { label, className, Icon } = badge;
+  const [cancelando, setCancelando] = useState(false);
+  const [errorCancelacion, setErrorCancelacion] = useState("");
+  const [errorComprobante, setErrorComprobante] = useState("");
+
+  async function descargar() {
+    setErrorComprobante("");
+    try {
+      await descargarComprobanteSimulado(reserva.id);
+    } catch {
+      setErrorComprobante("No se pudo descargar el comprobante. Intenta de nuevo.");
+    }
+  }
+
+  async function cancelar() {
+    if (cancelando || !window.confirm("¿Quieres cancelar esta reserva?")) return;
+    setCancelando(true);
+    setErrorCancelacion("");
+    try {
+      await onCancelar();
+    } catch {
+      setErrorCancelacion("No se pudo cancelar la reserva. Comprueba su estado e inténtalo de nuevo.");
+    } finally {
+      setCancelando(false);
+    }
+  }
 
   return (
     <div
@@ -154,6 +186,32 @@ export default function ReservaHistorialModal({
               {formatearPrecio(reserva.total)}
             </span>
           </div>
+
+          {reserva.estadoPago && <p className="text-sm font-semibold text-sea">{reserva.estadoPago}</p>}
+          {(reserva.puedePagar || reserva.pagoSimuladoEnRevision) && correoCuenta &&
+            <PagoSimulado reservaId={reserva.id} correoCuenta={correoCuenta} enRevision={Boolean(reserva.pagoSimuladoEnRevision)} />}
+
+          {reserva.puedeCancelar && (
+            <button type="button" onClick={() => void cancelar()} disabled={cancelando}
+              className="w-full rounded-md border border-red-200 px-4 py-3 font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60">
+              {cancelando ? "Cancelando…" : "Cancelar reserva"}
+            </button>
+          )}
+          {errorCancelacion && <p role="alert" className="text-sm text-red-700">{errorCancelacion}</p>}
+          {reserva.comprobanteAprobado && (
+            <section className="space-y-2 rounded-md border border-sea/15 bg-background p-4 text-sm text-sea">
+              <p>Comprobante aprobado · {reserva.id}</p>
+              {reserva.comprobanteAprobado.generado ? (
+                <button type="button" className="font-semibold underline" onClick={() => void descargar()}>
+                  Descargar comprobante PDF
+                </button>
+              ) : (
+                <a href={reserva.comprobanteAprobado.url ?? undefined} target="_blank" rel="noopener noreferrer"
+                  className="font-semibold underline">Abrir comprobante</a>
+              )}
+              {errorComprobante && <p role="alert" className="text-red-700">{errorComprobante}</p>}
+            </section>
+          )}
 
           <button
             type="button"

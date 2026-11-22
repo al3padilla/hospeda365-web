@@ -79,6 +79,17 @@ export default function DashboardAdmin({ reservations, rooms }: DashboardAdminPr
           );
         })}
       </div>
+      <section className={styles.panel}>
+        <div className={styles.panelHead}><h2>Pagos por estado</h2></div>
+        <dl className="grid gap-3 sm:grid-cols-4">
+          {r.pagosPorEstado.map(({ etiqueta, cantidad }) => (
+            <div key={etiqueta} className="rounded-lg bg-[#f4f7f8] p-3">
+              <dt className="text-sm text-[#45636c]">{etiqueta}</dt>
+              <dd className="text-xl font-semibold text-[#17323b]">{cantidad}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
 
       <section className={styles.panel}>
         <div className={styles.panelHead}>

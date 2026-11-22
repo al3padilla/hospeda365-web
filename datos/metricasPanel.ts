@@ -19,6 +19,7 @@ export type ResumenPanel = {
   ingresosPorMes: ResumenMes[];
   estadoHabitaciones: ConteoEstado[];
   reservasPorEstado: { etiqueta: string; cantidad: number }[];
+  pagosPorEstado: { etiqueta: string; cantidad: number }[];
 };
 
 /** "2026-09-25" → "2026-09" */
@@ -90,6 +91,12 @@ const MAPA_ESTADO: Record<HabitacionAdmin["status"], EstadoHabitacion> = {
   MAINTENANCE: "mantenimiento",
 };
 
+export function comprobantePorValidar(reserva: ReservaAdmin): boolean {
+  return (reserva.status === "PENDING" || reserva.status === "CONFIRMED") &&
+    reserva.paymentStatus === "PENDING" &&
+    Boolean(reserva.proofGenerated || reserva.proofUrl?.startsWith("https://"));
+}
+
 export function resumirPanel(
   reservas: ReservaAdmin[],
   habitaciones: HabitacionAdmin[],
@@ -116,12 +123,11 @@ export function resumirPanel(
     ),
     porCobrar: suma(
       reservas.filter(
-        (r) => r.paymentStatus === "PENDING" && r.status !== "REJECTED",
+        (r) => r.paymentStatus === "PENDING" && r.status !== "REJECTED" && r.status !== "CANCELLED",
       ),
     ),
     reservasPendientes: reservas.filter((r) => r.status === "PENDING").length,
-    comprobantesPorValidar: reservas.filter((r) => r.paymentStatus === "PENDING")
-      .length,
+    comprobantesPorValidar: reservas.filter(comprobantePorValidar).length,
     ingresosPorMes: ingresosPorMes(reservas, hoy),
     estadoHabitaciones: [...conteo].map(([estado, cantidad]) => ({
       estado,
@@ -140,6 +146,16 @@ export function resumirPanel(
         etiqueta: "Rechazadas",
         cantidad: reservas.filter((r) => r.status === "REJECTED").length,
       },
+      {
+        etiqueta: "Canceladas",
+        cantidad: reservas.filter((r) => r.status === "CANCELLED").length,
+      },
+    ],
+    pagosPorEstado: [
+      { etiqueta: "Pendientes de pagar", cantidad: reservas.filter((r) => r.status === "CONFIRMED" && r.paymentUnsubmitted).length },
+      { etiqueta: "En revisión", cantidad: reservas.filter(comprobantePorValidar).length },
+      { etiqueta: "Aprobados", cantidad: reservas.filter((r) => r.paymentStatus === "APPROVED").length },
+      { etiqueta: "Rechazados", cantidad: reservas.filter((r) => r.paymentStatus === "REJECTED").length },
     ],
   };
 }

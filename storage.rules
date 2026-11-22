@@ -1,0 +1,35 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /comprobantes/{uid}/{reservaId} {
+      function esDueno() {
+        return request.auth != null && request.auth.uid == uid;
+      }
+
+      function perfil() {
+        return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+      }
+
+      allow get: if esDueno() || (request.auth != null && perfil().activo == true &&
+        perfil().rol in ['admin', 'recepcionista']);
+      function archivoValido() {
+        return
+        request.resource.size > 0 && request.resource.size <= 5 * 1024 * 1024 &&
+        request.resource.contentType in ['application/pdf', 'image/jpeg', 'image/png'];
+      }
+
+      function puedeAdjuntar() {
+        let reserva = firestore.get(/databases/(default)/documents/reservations/$(reservaId)).data;
+        return reserva.usuarioId == uid && reserva.estado == 'confirmada' &&
+          reserva.estadoPago in ['sin_comprobante', 'rechazado'];
+      }
+
+      allow create: if esDueno() && perfil().activo == true && archivoValido() &&
+        (!firestore.exists(/databases/(default)/documents/reservations/$(reservaId)) || puedeAdjuntar());
+      allow update: if esDueno() && perfil().activo == true && archivoValido() && puedeAdjuntar();
+      allow delete: if esDueno() &&
+        !firestore.exists(/databases/(default)/documents/reservations/$(reservaId));
+    }
+  }
+}
