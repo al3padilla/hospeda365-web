@@ -1,6 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
+import { AlertTriangle, RotateCw, X } from "lucide-react";
 import RoomCard from "./RoomCard";
 import { LoaderInline, SkeletonGrid } from "./Loader";
 import {
@@ -37,8 +37,15 @@ function DetalleFiltro({ busqueda }: { busqueda: CriteriosBusqueda }) {
 }
 
 export default function HabitacionesDestacadas() {
-  const { habitacionesFiltradas, busqueda, cargando, limpiarBusqueda } =
-    useHabitaciones();
+  const {
+    habitaciones,
+    habitacionesFiltradas,
+    busqueda,
+    cargando,
+    error,
+    limpiarBusqueda,
+    recargar,
+  } = useHabitaciones();
 
   return (
     <section id="habitaciones" className="container mx-auto px-4 py-16 sm:py-20">
@@ -77,13 +84,25 @@ export default function HabitacionesDestacadas() {
           <LoaderInline texto="Buscando habitaciones…" className="py-8" />
           <SkeletonGrid count={3} />
         </div>
+      ) : error ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-6 py-10 text-center text-amber-900">
+          <AlertTriangle className="mx-auto mb-3 h-7 w-7" aria-hidden />
+          <p className="font-semibold">No pudimos conectar con el catálogo.</p>
+          <p className="mt-1 text-sm">{error} Revisa tu conexión e inténtalo de nuevo.</p>
+          <button
+            type="button"
+            onClick={recargar}
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-sea px-4 py-2 text-sm font-semibold text-white"
+          >
+            <RotateCw className="h-4 w-4" aria-hidden />
+            Reintentar
+          </button>
+        </div>
       ) : habitacionesFiltradas.length === 0 ? (
         <p className="rounded-xl border border-dashed border-sea/20 bg-foam py-12 text-center text-mist">
-          No hay habitaciones disponibles para{" "}
-          {busqueda
-            ? pluralizar(busqueda.personas, "persona")
-            : "ese número de personas"}. Prueba con menos
-          huéspedes o quita el filtro.
+          {habitaciones.length === 0
+            ? "No hay habitaciones activas publicadas en este momento."
+            : `No hay habitaciones disponibles para ${busqueda ? pluralizar(busqueda.personas, "persona") : "ese número de personas"}. Prueba con menos huéspedes o quita el filtro.`}
         </p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

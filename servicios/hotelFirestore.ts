@@ -2,6 +2,8 @@ import {
   addDoc,
   collection,
   doc,
+  getDocs,
+  limit,
   onSnapshot,
   query,
   runTransaction,
@@ -16,6 +18,7 @@ import {
 
 import { obtenerDb } from "./firebase";
 import type {
+  DatosHabitacion,
   EstadoHabitacion,
   EstadoPago,
   Habitacion,
@@ -118,6 +121,7 @@ function mapearHabitacion(
     number: texto(data, "numero", snapshot.id),
     floor: numero(data, "piso"),
     name: texto(data, "nombre", texto(data, "tipo", snapshot.id)),
+    category: texto(data, "tipo"),
     description: texto(data, "descripcion"),
     pricePerNight: numero(data, "precioNoche"),
     capacity: numero(data, "capacidad", 1),
@@ -165,14 +169,48 @@ function mapearReserva(
 
 function aHabitacionAdmin(habitacion: Habitacion): HabitacionAdmin {
   return {
-    id: habitacion.id,
-    number: habitacion.number,
-    name: habitacion.name,
+    ...habitacion,
     title: habitacion.name,
-    pricePerNight: habitacion.pricePerNight,
     price: habitacion.pricePerNight,
-    status: habitacion.status,
   };
+}
+
+function datosHabitacionFirestore(input: DatosHabitacion) {
+  return {
+    numero: input.number.trim(),
+    piso: input.floor,
+    nombre: input.name.trim(),
+    tipo: input.category.trim().toLocaleLowerCase("es"),
+    estado: ESTADO_HABITACION_DB[input.status],
+    capacidad: input.capacity,
+    precioNoche: input.pricePerNight,
+    descripcion: input.description.trim(),
+    amenidades: input.highlights.map((item) => item.trim()).filter(Boolean),
+    imagenes: [input.imageUrl.trim()],
+    activa: input.active,
+  };
+}
+
+function idHabitacionPorNumero(numero: string): string {
+  return `habitacion-${encodeURIComponent(numero.trim().toLocaleLowerCase("es"))}`;
+}
+
+async function asegurarNumeroHabitacionDisponible(
+  numero: string,
+  habitacionId?: string,
+): Promise<void> {
+  const snapshot = await getDocs(
+    query(
+      collection(obtenerDb(), "rooms"),
+      where("numero", "==", numero.trim()),
+      limit(2),
+    ),
+  );
+
+  const duplicada = snapshot.docs.find((item) => item.id !== habitacionId);
+  if (duplicada) {
+    throw new Error(`Ya existe una habitación con el número ${numero.trim()}.`);
+  }
 }
 
 export function escucharHabitaciones(
@@ -407,6 +445,53 @@ export async function cambiarEstadoHabitacion(
 ): Promise<void> {
   await updateDoc(doc(obtenerDb(), "rooms", id), {
     estado: ESTADO_HABITACION_DB[status],
-    actualizadoEn: serverTimestamp(),
+    actualizadaEn: serverTimestamp(),
+  });
+}
+
+export async function crearHabitacion(
+  input: DatosHabitacion,
+): Promise<string> {
+  const db = obtenerDb();
+  const numero = input.number.trim();
+  await asegurarNumeroHabitacionDisponible(numero);
+
+  const referencia = doc(db, "rooms", idHabitacionPorNumero(numero));
+  await runTransaction(db, async (transaction) => {
+    const existente = await transaction.get(referencia);
+    if (existente.exists()) {
+      throw new Error(
+        `El número ${numero} ya pertenece a una habitación registrada.`,
+      );
+    }
+
+    transaction.set(referencia, {
+      ...datosHabitacionFirestore(input),
+      creadaEn: serverTimestamp(),
+      actualizadaEn: serverTimestamp(),
+    });
+  });
+
+  return referencia.id;
+}
+
+export async function actualizarHabitacion(
+  id: string,
+  input: DatosHabitacion,
+): Promise<void> {
+  await asegurarNumeroHabitacionDisponible(input.number, id);
+  await updateDoc(doc(obtenerDb(), "rooms", id), {
+    ...datosHabitacionFirestore(input),
+    actualizadaEn: serverTimestamp(),
+  });
+}
+
+export async function cambiarActividadHabitacion(
+  id: string,
+  active: boolean,
+): Promise<void> {
+  await updateDoc(doc(obtenerDb(), "rooms", id), {
+    activa: active,
+    actualizadaEn: serverTimestamp(),
   });
 }

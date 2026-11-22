@@ -19,6 +19,7 @@ export type Habitacion = {
   number: string;
   floor: number;
   name: string;
+  category: string;
   description: string;
   pricePerNight: number;
   capacity: number;
@@ -27,6 +28,8 @@ export type Habitacion = {
   status: EstadoHabitacion;
   active: boolean;
 };
+
+export type DatosHabitacion = Omit<Habitacion, "id">;
 
 export type Reserva = {
   id: string;
@@ -59,10 +62,7 @@ export type NuevaReserva = Omit<
   proofUrl?: string | null;
 };
 
-export type HabitacionAdmin = Pick<
-  Habitacion,
-  "id" | "number" | "name" | "pricePerNight" | "status"
-> & {
+export type HabitacionAdmin = Habitacion & {
   title: string;
   price: number;
 };

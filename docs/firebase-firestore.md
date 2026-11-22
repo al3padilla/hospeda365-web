@@ -77,7 +77,7 @@ Los datos de habitación se duplican deliberadamente para conservar el valor his
 | `AuthContext` | Authentication y `users` | Iniciar sesión, registrar, cerrar sesión, actualizar perfil |
 | `HabitacionesContext` | `rooms` | Suscripción al catálogo, filtro por capacidad y estado |
 | `ReservasContext` | `reservations` | Historial del usuario, creación y cancelación |
-| `AdminContext` | `rooms` y `reservations` | Gestión de reservas, pagos y estado de habitaciones |
+| `AdminContext` | `rooms` y `reservations` | CRUD de habitaciones, gestión de reservas, pagos y estados |
 
 Las lecturas utilizan `onSnapshot` para sincronización en tiempo real.
 
@@ -91,7 +91,9 @@ Las reglas de `firestore.rules` aplican:
 - Creación de reservas por el propietario autenticado o personal.
 - Cancelación limitada al propietario de la reserva.
 - Gestión operativa limitada a `recepcionista` y `admin`.
-- Gestión de habitaciones limitada a `admin`.
+- Alta, edición, activación y retiro de habitaciones limitada a `admin`.
+- Recepción únicamente puede cambiar el estado operativo de una habitación.
+- El retiro usa `activa: false`; las reservas conservan su copia histórica.
 - Eliminación física de reservas deshabilitada.
 
 ## Índices
