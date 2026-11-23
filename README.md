@@ -3,14 +3,14 @@
 Plataforma web del **Hotel Terra Azul** impulsada por **Hospeda365**.  
 Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, y al personal operar el panel administrativo de forma sincronizada en tiempo real con la aplicación móvil.
 
-## Enlaces del Proyecto
+## Enlaces del Proyecto:
 
 * **Aplicación Web en Producción (Vercel):** [https://hospeda365-web.vercel.app/](https://hospeda365-web.vercel.app/)
 * **Repositorio Aplicación Móvil (React Native):** [https://github.com/al3padilla/hospeda365-app](https://github.com/al3padilla/hospeda365-app)
 
 ---
 
-## Stack
+## Stack:
 
 | Tecnología | Uso |
 | --- | --- |
@@ -23,7 +23,7 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 
 ---
 
-## Módulos y Sincronización Multiplataforma
+## Módulos y Sincronización Multiplataforma:
 
 * **Autenticación completa:** Registro e inicio de sesión mediante correo electrónico y **Google** con control de acceso por roles (`huésped` y `admin`).
 * **Persistencia compartida en tiempo real:** Conexión directa con Cloud Firestore (`users`, `rooms` y `bookings`) sincronizada al instante con `hospeda365-app`.
@@ -32,7 +32,7 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 
 ---
 
-## Mockups de Diseño (Etapa 1 - Figma)
+## Mockups de Diseño (Etapa 1 - Figma):
 
 [Consultar diseño original en Figma](https://www.figma.com/design/Ffof4DCOZYSizHP9uBn2H4/)
 
@@ -70,7 +70,7 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 
 ---
 
-## Configuración
+## Configuración:
 
 ```bash
 npm ci
@@ -96,7 +96,7 @@ Abre [http://localhost:3000](http://localhost:3000) en desarrollo.
 
 ---
 
-## Comandos
+## Comandos:
 
 | Comando | Función |
 | --- | --- |
@@ -108,7 +108,7 @@ Abre [http://localhost:3000](http://localhost:3000) en desarrollo.
 
 ---
 
-## Migración inicial
+## Migración inicial:
 
 La migración carga seis habitaciones y nueve reservas desde `scripts/firestore.seed.json`.
 
@@ -127,7 +127,7 @@ npm run seed:firestore
 
 ---
 
-## Estructura
+## Estructura:
 
 | Ruta | Responsabilidad |
 | --- | --- |
@@ -141,7 +141,7 @@ npm run seed:firestore
 
 ---
 
-## Firebase
+## Firebase:
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes
@@ -151,7 +151,7 @@ La definición de colecciones, permisos e índices está documentada en [docs/fi
 
 ---
 
-## Equipo de Desarrollo (EcoTech Solutions)
+## Equipo de Desarrollo (EcoTech Solutions):
 
 Integrantes:
 
@@ -163,7 +163,7 @@ Integrantes:
 
 ---
 
-## Licencia
+## Licencia:
 
 Este proyecto está protegido bajo la licencia **Creative Commons Atribución-NoComercial-CompartirIgual 4.0 Internacional (CC BY-NC-SA 4.0)**.
 
