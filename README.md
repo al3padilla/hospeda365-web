@@ -62,7 +62,7 @@ Permite a los huéspedes explorar habitaciones, gestionar su cuenta y reservar, 
 
 ---
 
-## Requisitos
+## Requisitos:
 
 - Node.js **20+**
 - Proyecto Firebase con **Authentication** (Email/Password y Google), **Cloud Firestore** y **Storage** (compartido con `hospeda365-app`)
