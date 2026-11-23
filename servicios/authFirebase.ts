@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   FacebookAuthProvider,
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -72,8 +73,9 @@ function separarNombre(displayName: string | null): {
   };
 }
 
-async function asegurarPerfilFacebook(
+async function asegurarPerfilSocial(
   usuarioFb: UsuarioFirebase,
+  proveedor: "Google" | "Facebook",
 ): Promise<void> {
   const ref = doc(obtenerDb(), COLECCION_USUARIOS, usuarioFb.uid);
   const existente = await getDoc(ref);
@@ -83,8 +85,10 @@ async function asegurarPerfilFacebook(
   if (!email) {
     await signOut(obtenerAuth());
     throw new ErrorAuth(
-      "correo_social_no_disponible",
-      "Facebook no proporcionó un correo electrónico.",
+      proveedor === "Google"
+        ? "correo_google_no_disponible"
+        : "correo_social_no_disponible",
+      `${proveedor} no proporcionó un correo electrónico.`,
     );
   }
 
@@ -166,6 +170,33 @@ export const authFirebase: ServicioAuth = {
     }
   },
 
+  async loginGoogle(): Promise<Sesion> {
+    try {
+      const auth = obtenerAuth();
+      const { user } = await signInWithPopup(auth, new GoogleAuthProvider());
+      try {
+        await asegurarPerfilSocial(user, "Google");
+        return await construirSesion(user);
+      } catch (error) {
+        if (auth.currentUser === user) await signOut(auth);
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof ErrorAuth) throw error;
+      const codigo = (error as { code?: string }).code ?? "";
+      let codigoGoogle = traducirError(codigo);
+      if (codigoGoogle === "inicio_social_cancelado") {
+        codigoGoogle = "inicio_google_cancelado";
+      } else if (
+        codigoGoogle === "proveedor_social_no_disponible" ||
+        codigoGoogle === "credenciales_invalidas"
+      ) {
+        codigoGoogle = "inicio_google_no_disponible";
+      }
+      throw new ErrorAuth(codigoGoogle, "No se pudo iniciar sesión con Google.");
+    }
+  },
+
   async loginFacebook(): Promise<Sesion> {
     try {
       const provider = new FacebookAuthProvider();
@@ -173,7 +204,7 @@ export const authFirebase: ServicioAuth = {
       provider.setCustomParameters({ display: "popup" });
 
       const credencial = await signInWithPopup(obtenerAuth(), provider);
-      await asegurarPerfilFacebook(credencial.user);
+      await asegurarPerfilSocial(credencial.user, "Facebook");
       return await construirSesion(credencial.user);
     } catch (error) {
       if (error instanceof ErrorAuth) throw error;

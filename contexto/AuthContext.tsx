@@ -39,6 +39,7 @@ type AuthContextValue = {
 
   /** Resultado de autenticación para control de navegación. */
   login: (credenciales: Credenciales) => Promise<boolean>;
+  loginGoogle: () => Promise<boolean>;
   loginFacebook: () => Promise<boolean>;
   registrar: (datos: DatosRegistro) => Promise<boolean>;
   logout: () => Promise<void>;
@@ -92,6 +93,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [manejarError],
   );
+
+  const loginGoogle = useCallback(async (): Promise<boolean> => {
+    dispatch({ type: "OPERACION_INICIADA" });
+    try {
+      const sesion = await servicioAuth.loginGoogle();
+      dispatch({ type: "AUTENTICACION_EXITOSA", payload: sesion });
+      return true;
+    } catch (error) {
+      manejarError(error);
+      return false;
+    }
+  }, [manejarError]);
 
   const loginFacebook = useCallback(async (): Promise<boolean> => {
     dispatch({ type: "OPERACION_INICIADA" });
@@ -162,6 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       nombreCompleto: selNombreCompleto(state),
       iniciales: selIniciales(state),
       login,
+      loginGoogle,
       loginFacebook,
       registrar,
       logout,
@@ -171,6 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [
       state,
       login,
+      loginGoogle,
       loginFacebook,
       registrar,
       logout,

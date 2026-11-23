@@ -29,6 +29,9 @@ export type CodigoErrorAuth =
   | "correo_social_no_disponible"
   | "inicio_social_cancelado"
   | "proveedor_social_no_disponible"
+  | "correo_google_no_disponible"
+  | "inicio_google_cancelado"
+  | "inicio_google_no_disponible"
   | "perfil_social_no_creado"
   | "usuario_inactivo"
   | "usuario_no_encontrado"
@@ -57,6 +60,10 @@ export const MENSAJES_ERROR: Record<CodigoErrorAuth, string> = {
   inicio_social_cancelado: "Se canceló el inicio de sesión con Facebook.",
   proveedor_social_no_disponible:
     "El acceso con Facebook aún no está disponible. Contacta al hotel.",
+  correo_google_no_disponible: "Google no compartió tu correo electrónico.",
+  inicio_google_cancelado: "Se canceló el inicio de sesión con Google.",
+  inicio_google_no_disponible:
+    "El acceso con Google no está disponible en este momento. Intenta de nuevo más tarde.",
   perfil_social_no_creado:
     "No pudimos crear tu perfil de huésped. Intenta de nuevo.",
   usuario_inactivo: "Esta cuenta está desactivada. Contacta al hotel.",
@@ -72,6 +79,7 @@ export type ServicioAuth = {
   /** Lanza `ErrorAuth` si las credenciales no son válidas. */
   login(credenciales: Credenciales): Promise<Sesion>;
 
+  loginGoogle(): Promise<Sesion>;
   loginFacebook(): Promise<Sesion>;
 
   registrar(datos: DatosRegistro): Promise<Sesion>;
