@@ -40,6 +40,7 @@ export default function FormularioLogin({ redirectTo }: { redirectTo?: string })
   const router = useRouter();
   const {
     login,
+    loginGoogle,
     loginFacebook,
     estaAutenticado,
     usuario,
@@ -154,6 +155,15 @@ export default function FormularioLogin({ redirectTo }: { redirectTo?: string })
           <span className="text-xs text-mist">o</span>
           <span className="h-px flex-1 bg-sea/10" />
         </div>
+
+        <button
+          type="button"
+          disabled={estaCargando}
+          onClick={() => void loginGoogle()}
+          className="mb-3 inline-flex w-full items-center justify-center rounded-md border border-sea/20 bg-white py-2.5 text-sm font-semibold text-sea transition hover:border-sea/40 disabled:cursor-wait disabled:opacity-60"
+        >
+          Continuar con Google
+        </button>
 
         <button
           type="button"
